@@ -1,0 +1,17 @@
+node_modules/
+.npm-cache/
+dist/
+.runtime/
+.env
+.env.*
+!.env.example
+data/
+uploads/
+sessions/
+test-results/
+*.db*
+*.sqlite*
+*.log
+client_secret*.json
+credentials*.json
+*token*.json

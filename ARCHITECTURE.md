@@ -1,0 +1,43 @@
+# Architecture
+
+## Components and flow
+
+One TypeScript repository: React 19 UI → same-origin native Node HTTP API → SQLite (Node built-in) and optional server-side Gemini REST adapter. Vite middleware supplies local development assets; a production build serves static dist files. No cloud resources are provisioned. One npm command runs both frontend and backend. Built-in SQLite replaces an extra database dependency because installed Node 22 supports it; this is still SQLite, with experimental API warnings on Node 22.17.
+
+UI sections: Chat, Leads, Tasks, Gmail, Connections, Settings. State polling every 1.5 seconds retrieves persisted history, drafts, progress, campaign/action outcomes and the last 30 activity events. API failures show reconnect status and useful errors. Connection health reports last real provider request, separate from configuration readiness and selected demo/live mode. Gemini diagnostics distinguish missing/invalid key, consent required, unavailable allowlisted model, quota, access and network failures without exposing provider error bodies.
+
+Imports use csv-parse and ExcelJS without formula execution. Upload bytes arrive as capped JSON/base64 and are parsed in server memory. User-mapped fields undergo schema validation and email normalization; invalid and duplicate rows are skipped with record-level reasons. Commit validates again against current database emails in a transaction. Source filename is stored per lead. Originals and previews are never committed to Git or written to disk.
+
+Chat reserves a durable unique request ID and persists the user message before calling AI. Repeating the same request ID returns the existing task; the client keeps that ID on a failed network request. A validated plan contains bounded limit, city/company filters, language and reply. Server-side filtering selects IDs, creates one pending step per lead and pauses for review. Imported content has no authority to add actions. A task can only create drafts.
+
+## Provider boundary
+
+Demo adapter is deterministic and explicitly labeled in UI, chat, task and draft metadata. Live adapter uses Gemini structured JSON output and validates responses with Zod. It performs one planning request and at most one request per draft attempt; timeout is 30 seconds. No tool execution, browser action, sending, or recursive AI loops exist. Prompt instructions classify lead fields as untrusted data; output is rendered as React-escaped text.
+
+Keys load only from server `.env`; no VITE_ secret variable is used. Live calls require a configured key, unbilled-project attestation and data consent. Only the currently documented free-tier model is allowlisted. API keys do not expose billing tier, so account confirmation remains necessary. No billing API, purchase, automatic upgrade or alternative provider is implemented. Free-tier data terms and account availability must be reviewed by the user.
+
+## Supervisor state machine
+
+Planning uses needs_user while the bounded request is in flight, then paused with selected recipients. Start/resume → queued → running → completed. User pause → paused; cancel → cancelled. A provider error → failed; exhausted rate-limit attempts → needs_user. Queued/running tasks become paused after restart, working steps revert to pending. Interrupted planning becomes failed with a recreate instruction.
+
+A single supervisor lock processes one step at a time. Each step tracks pending/working/done, attempts and error. Draft insertion and step completion are one SQLite transaction with a unique (task_id, lead_id) constraint. Refresh/restart cannot duplicate saved drafts. Pause/cancel during an AI call does not abort the remote request, but the result is discarded and no new draft is committed. Control is effective between steps. Terminal completed/cancelled tasks cannot restart.
+
+HTTP 429 uses Retry-After seconds or date if available, else 30 seconds. The persisted next_retry timestamp drives automatic wakeup; no claimed quota reset. Three attempts stop automatic retry. Manual resume after checking quota is permitted and may make one additional attempt; a new 429 requires help again. Permanent errors fail without automatic retries. Planning errors are persisted and require a new request. Tasks snapshot mode and recipient IDs; current lead fields are read when a pending draft runs.
+
+## Storage and deployment boundaries
+
+SQLite WAL tables: leads, chat, tasks, steps, drafts, events, campaigns, mail_actions. Migrations add tables/columns without dropping existing data. Foreign keys protect lead steps; unique request IDs, email, draft IDs and recipient/content fingerprints provide deduplication. Data, secrets, dependency caches and build outputs are ignored by Git. The database is not encrypted. Gmail token files use AES-256-GCM with a local random key; OS permissions and disk protection remain necessary because key and ciphertext are on the same machine.
+
+The server binds 127.0.0.1, validates Host and rejects foreign Origin headers; mutating API calls require JSON. Frame embedding is denied. HTTP route guards and Vite filesystem deny rules prevent serving private data, credential directories and secrets in development; production serves only dist. It is a single-user local application without login. Do not expose this directly to the internet. Remote hosting needs authentication, TLS, storage protection, deployment secrets, CSRF/session design and worker coordination. Only one process may run the supervisors against a database.
+
+The laptop must remain on for local task execution. A hosted webpage cannot control a laptop browser by itself. Future browser actions need an authenticated local bridge, isolated profile, supported installed browser and laptop availability. Browser binaries were not installed.
+
+## Gmail sending boundary
+
+The server-side Gmail REST adapter requests only gmail.send through Google Web OAuth, a loopback callback, expiring one-use cookie-bound state and S256 PKCE. Offline tokens are encrypted outside Git/frontend responses. Authentication checks refresh tokens without reading a mailbox. Disconnect invalidates pending auth, deletes local tokens, pauses campaigns and requests revocation; failed revocation is reported for manual Google Account cleanup. Connection identity changes invalidate prior authorization. A user-configured From address must match the account/verified alias; send-only scope cannot independently verify the account email.
+
+Campaign creation is idempotent by request ID and snapshots recipients, complete subject/body and local draft identity. Authorization binds the fixed review digest, Gmail channel, sender, connection identity, limit and expiry. UI authorizations last one hour; the API permits at most 24 hours. Real sending also requires GMAIL_ENABLE_SENDING=true, default false. A send worker processes at most one request at a time. The action is durably marked sending before dispatch; successful Gmail IDs are stored. A unique draft identity and unique recipient/content fingerprint block duplicates across campaigns. Reserved examples/sample leads are rejected.
+
+Action states: draft → queued → sending → sent, failed or uncertain. Known 401/rate-limit rejections return to queued and pause the campaign; retry is manual after authentication/limit checks. Retry-After or a bounded 30-second fallback is displayed, never called a quota reset. Timeout, network failure after dispatch, 5xx, absent success ID and restart during sending become uncertain. Startup pauses previously active campaigns. Pause/cancel stops subsequent requests; an in-flight response must still be recorded rather than discarded.
+
+Only send scope is requested, so automated Sent reconciliation is unavailable. Uncertainty blocks resume and reauthorization until the user checks Gmail using the durable RFC Message-ID and records evidence. Marking sent may include a manually supplied Gmail API ID; marking not-sent closes the action as failed. Neither queues a resend. Expired authorization or a changed account/sender requires explicit reauthorization of remaining items; known sent/failed items remain closed. Cancelled records remain durable. Actual consent/refresh/send and provider-specific limits remain unverified until user configuration and a later explicitly authorized test. No real development email is sent.
