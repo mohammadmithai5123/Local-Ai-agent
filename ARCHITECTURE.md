@@ -1,5 +1,7 @@
 # Architecture
 
+Gmail account verification (October 9, 2026): actual Web OAuth callback and refresh-token exchange passed. Persisted setup evidence distinguishes successful callback registration/exchange from authentication refresh. Verified refers to authentication only; sending remains disabled and live send acceptance/delivery unverified. No permission expansion or implementation change was needed.
+
 ## Bounded live workflow retry
 
 Chat atomically saves task, planning marker and user message before returning the task ID. Planning continues asynchronously so controls stay usable while the provider retries; the client polls its persisted state. Planning marker scope constrains guided samples to their own IDs. An in-flight planning task can be paused/cancelled; resume waits for the existing provider lock rather than launching concurrent requests.

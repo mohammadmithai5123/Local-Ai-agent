@@ -1,5 +1,11 @@
 # Verification — milestone 3, October 8, 2026
 
+## Gmail authentication — October 9, 2026 (Asia/Karachi)
+
+Relevant existing Gmail tests: 9 passed, 0 failed (mocked transports only). They cover encrypted storage, state/PKCE, authorization, duplicate dispatch, uncertainty/restart, auth/rate limits and MIME safety. No source/dependency changes were needed; no new build was required for documentation/private configuration updates.
+
+Actual user consent and Web client callback code exchange succeeded at http://localhost:3000/api/gmail/callback. Real POST /api/gmail/check returned HTTP 200 after a Google refresh-token exchange, granting only gmail.send. Setup Gmail status is Verified for authentication; send acceptance/delivery, sender account identity and live revocation are not established by this check. GMAIL_ENABLE_SENDING remains false in private configuration and running state. No real email was sent. Existing single-test preview is available, no test campaign exists, and later sending still requires separate explicit authorization. This supersedes historical missing-OAuth notes below.
+
 ## Latest live workflow result (supersedes earlier snapshots below)
 
 Personal app persistence was also verified after stopping/restarting the server: the same two live drafts and completed task returned, Setup workflow status remained Verified, and Gmail sending stayed false. Planning now returns a durable task immediately while generation continues in the background, so UI Pause/Cancel remains available; paused planning has a Resume planning control. Browser visual/keyboard behavior remains unverified.

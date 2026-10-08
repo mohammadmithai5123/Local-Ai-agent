@@ -1,5 +1,7 @@
 # Roadmap
 
+October 9, 2026: actual Gmail Web OAuth consent/callback and refresh authentication verified, using only gmail.send. No email sent; sending stays disabled. Local single-test preview is ready for a later user-supplied recipient and separate authorization. Send acceptance/delivery and live revocation remain unverified.
+
 Latest milestone: bounded single-layer 503 retry, durable paused planning/draft resume, cancel-aware waits/requests, safe stage diagnostics and explicit configurable same-provider Flash-Lite option are implemented. Live Flash-Lite one-lead and small multi-lead Roman Urdu drafts passed; Flash 3.8 drafting was still 503-blocked. Browser and Gmail account/send verification remain pending. No automatic fallback or paid usage.
 
 October 8 connectivity follow-up: permanent IPv4-first launch flags, explicit upstream 503 diagnostics and clearer live verification startup/planning failures are implemented and tested. Actual Google metadata, minimal generation, structured JSON and the exact app health request each returned 200 during diagnosis; full workflow attempts also encountered intermittent 503. Successful small requests do not prove a completed workflow or billing tier.

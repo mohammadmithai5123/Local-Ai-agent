@@ -64,6 +64,8 @@ It performs real Gemini requests and consumes free quota, using two synthetic pr
 
 ## Gmail setup and campaigns
 
+Current local status (October 9, 2026): actual Google consent/callback and refresh-token authentication passed with gmail.send only. Sending remains disabled; no real email has been sent. Gmail can prepare one local test-email review for later explicit authorization. Authentication does not verify send acceptance, inbox delivery or the configured sender's identity. Earlier missing-account statements describe previous milestone snapshots.
+
 See [GMAIL_SETUP.md](GMAIL_SETUP.md) for exact Google console, private `.env`, callback, scope, token protection, disconnect and single-test instructions. Configure OAuth Web application credentials and `GMAIL_SENDER_EMAIL`, register `http://localhost:3000/api/gmail/callback`, then connect and consent yourself. Keep `GMAIL_ENABLE_SENDING=false` during setup. No account was connected and no real message was sent during development.
 
 The Gmail screen snapshots selected drafts and recipients, shows complete subject/body previews, and requires an explicit campaign authorization with a maximum count and expiry. Real sending additionally needs `GMAIL_ENABLE_SENDING=true`. Merely enabling the flag, connecting OAuth, saving a campaign or creating a single-test review does not authorize delivery. Only gmail.send scope is used; drafts are local and the app cannot read Sent. Uncertain outcomes must be manually reconciled and are never automatically resent. Sent means accepted by Gmail, not guaranteed delivery. WhatsApp and LinkedIn remain unimplemented.
