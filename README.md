@@ -64,6 +64,8 @@ It performs real Gemini requests and consumes free quota, using two synthetic pr
 
 ## Gmail setup and campaigns
 
+Private `OUTREACH_LANGUAGE=english` makes newly generated outgoing draft subjects/bodies English even when chat instructions are Roman Urdu. Existing saved drafts remain their original content. The single-test preview can be revised before any authorization or attempt; its recipient stays fixed and the review digest changes. Previously authorized, attempted or uncertain content cannot be edited. A revised preview always needs fresh exact-content authorization; sending remains disabled while reviewing.
+
 Current local status (October 9, 2026): actual Google consent/callback and refresh-token authentication passed with gmail.send only. Sending remains disabled; no real email has been sent. Gmail can prepare one local test-email review for later explicit authorization. Authentication does not verify send acceptance, inbox delivery or the configured sender's identity. Earlier missing-account statements describe previous milestone snapshots.
 
 See [GMAIL_SETUP.md](GMAIL_SETUP.md) for exact Google console, private `.env`, callback, scope, token protection, disconnect and single-test instructions. Configure OAuth Web application credentials and `GMAIL_SENDER_EMAIL`, register `http://localhost:3000/api/gmail/callback`, then connect and consent yourself. Keep `GMAIL_ENABLE_SENDING=false` during setup. No account was connected and no real message was sent during development.

@@ -1,5 +1,7 @@
 # Roadmap
 
+English outgoing-draft preference and safe revision of an unused, unauthorized single-test preview are implemented. No send is inferred from editing or requesting the sending switch. Exact revised content still requires explicit authorization.
+
 October 9, 2026: actual Gmail Web OAuth consent/callback and refresh authentication verified, using only gmail.send. No email sent; sending stays disabled. Local single-test preview is ready for a later user-supplied recipient and separate authorization. Send acceptance/delivery and live revocation remain unverified.
 
 Latest milestone: bounded single-layer 503 retry, durable paused planning/draft resume, cancel-aware waits/requests, safe stage diagnostics and explicit configurable same-provider Flash-Lite option are implemented. Live Flash-Lite one-lead and small multi-lead Roman Urdu drafts passed; Flash 3.8 drafting was still 503-blocked. Browser and Gmail account/send verification remain pending. No automatic fallback or paid usage.

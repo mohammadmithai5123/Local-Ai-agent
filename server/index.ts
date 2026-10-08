@@ -101,6 +101,7 @@ const server = createServer(async (req, res) => {
         if(url.pathname==='/api/gmail/disconnect'){campaigns.pauseAll('Gmail disconnected. Sending is paused.');send(await gmail.disconnect());return;}
         if(url.pathname==='/api/campaigns/create'){send(campaigns.create(body));return;}
         if(url.pathname==='/api/campaigns/test'){send(campaigns.createTest(body));return;}
+        if(url.pathname==='/api/campaigns/test/revise'){send(campaigns.reviseTest(body));return;}
         const campaignAction=url.pathname.match(/^\/api\/campaigns\/([\w-]+)\/(authorize|pause|resume|cancel)$/);
         if(campaignAction){if(campaignAction[2]==='authorize'){if(process.env.GMAIL_ENABLE_SENDING!=='true')throw Error('Real sending is disabled. Set GMAIL_ENABLE_SENDING=true privately and restart only when ready.');campaigns.authorize(campaignAction[1],body);}else campaigns.control(campaignAction[1],campaignAction[2]);send({ok:true});return;}
         const reconciliation=url.pathname.match(/^\/api\/mail-actions\/([\w-]+)\/resolve$/);if(reconciliation){campaigns.resolve(reconciliation[1],body);send({ok:true});return;}

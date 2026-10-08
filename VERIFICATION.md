@@ -1,5 +1,9 @@
 # Verification — milestone 3, October 8, 2026
 
+English preference/preview follow-up: user requested English outgoing email and outreach content. Added private OUTREACH_LANGUAGE=english override for future drafts and a draft-only test-preview revision guarded by digest, zero authorization, zero attempts and fixed recipient. Pending preview is English and remains unauthorized; no email sent. English live prompt behavior is implemented, while actual English-model language quality remains unverified until a future live run. Test recipient/content remain in ignored SQLite, not this document or Git.
+
+Real local API preview revision returned success; resulting action remains draft, attempts 0, no campaign authorization, and sending false. Build and 31 tests passed, including English demo output and rejection of stale-digest/attempted-preview edits. Browser visual rendering remains unverified; the exact saved preview is available on the existing Gmail campaign screen.
+
 ## Gmail authentication — October 9, 2026 (Asia/Karachi)
 
 Relevant existing Gmail tests: 9 passed, 0 failed (mocked transports only). They cover encrypted storage, state/PKCE, authorization, duplicate dispatch, uncertainty/restart, auth/rate limits and MIME safety. No source/dependency changes were needed; no new build was required for documentation/private configuration updates.

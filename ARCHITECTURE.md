@@ -1,5 +1,7 @@
 # Architecture
 
+Outgoing language preference: `OUTREACH_LANGUAGE=english` overrides subject/body language for new demo/live drafts, while Roman Urdu chat instructions still plan lead selection. A single-test revision endpoint accepts the current digest and new subject/body only, requires a never-authorized draft campaign with exactly one unattempted draft action, atomically updates fingerprint/digest and never queues mail. Recipients and attempted/authorized snapshots cannot be revised. Old digest authorization is rejected. This supports correcting preview language before consent without creating a second test campaign.
+
 Gmail account verification (October 9, 2026): actual Web OAuth callback and refresh-token exchange passed. Persisted setup evidence distinguishes successful callback registration/exchange from authentication refresh. Verified refers to authentication only; sending remains disabled and live send acceptance/delivery unverified. No permission expansion or implementation change was needed.
 
 ## Bounded live workflow retry
