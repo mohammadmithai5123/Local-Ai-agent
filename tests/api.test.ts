@@ -47,6 +47,12 @@ for (const production of [true,false]) test(`real ${production?'production':'dev
         assert.equal(state.integrations.gmail, 'Not connected');
         assert.equal(state.gmail.connected,false);
         assert.equal(state.connection.code,'missing_key');
+        const setup=(await call('setup')).data;
+        assert.equal(setup.steps[0].status,'Not configured');
+        assert.equal(setup.steps[1].status,'Not configured');
+        assert.equal(setup.callback.matches,true);
+        assert.equal(setup.callback.registrationVerified,false);
+        assert.equal((await call('setup/workflow',{mode:'live',requestId:randomUUID()})).status,400);
         assert.equal((await call('gmail/connect',{})).status,400);
         assert.equal((await call('campaigns/test',{requestId:randomUUID(),recipient:'qa@workbench.test',subject:'Test only',body:'No actual sending'})).status,200);
         const review=(await call('state')).data.campaigns[0];

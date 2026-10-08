@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import { parse } from 'csv-parse/sync';
 import { z } from 'zod';
-export const leadSchema = z.object({ name: z.string().trim().min(1).max(200), email: z.string().trim().email().max(254).transform(s => s.toLowerCase()), company: z.string().trim().max(300).default(''), city: z.string().trim().max(200).default(''), notes: z.string().trim().max(2000).default('') });
+export const leadSchema = z.object({ name: z.string().trim().min(1).max(200), email: z.string().trim().email().max(254).transform(s => s.toLowerCase()), company: z.string().trim().max(300).default(''), city: z.string().trim().max(200).default(''), notes: z.string().trim().max(2000).default(''),country:z.string().trim().max(200).default(''),industry:z.string().trim().max(200).default('') });
 export async function readFile(name: string, bytes: Buffer) {
     if (bytes.length > 2000000)
         throw Error('Maximum upload size is 2 MB.');
@@ -46,7 +46,7 @@ export function mapRows(rows: string[][], mapping: Record<string, number>, exist
     rows.forEach((row, i) => {
         try {
             const obj: any = {};
-            for (const field of ['name', 'email', 'company', 'city', 'notes']) {
+            for (const field of ['name', 'email', 'company', 'city', 'notes','country','industry']) {
                 const n = mapping[field];
                 obj[field] = Number.isInteger(n) && n >= 0 ? row[n] ?? '' : '';
             }

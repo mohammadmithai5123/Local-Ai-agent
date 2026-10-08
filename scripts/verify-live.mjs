@@ -23,7 +23,8 @@ else {
  await call(`tasks/${task.id}/start`,{});
  const deadline=Date.now()+120000;do{await new Promise(r=>setTimeout(r,1000));state=await call('state');}while(['queued','running'].includes(state.tasks.find(t=>t.id===task.id).state)&&Date.now()<deadline);
  assert.equal(state.tasks.find(t=>t.id===task.id).state,'completed');const draft=state.drafts.find(d=>d.task_id===task.id);assert.ok(draft?.body.includes('Ayesha'));assert.ok(draft.body.includes('Harbor'));assert.match(draft.body,/\b(aap|ke|liye|hain|salam|Assalam)\b/i);assert.equal(state.mailActions.length,0);
- evidence.status='passed';evidence.reason='Real Gemini connection, Roman Urdu city selection and personalized draft save passed against an isolated imported fixture.';
+ const uae=await call('setup/workflow',{mode:'live',requestId:randomUUID()});assert.equal(uae.drafts,2);state=await call('state');const uaeDrafts=state.drafts.filter(d=>d.task_id===uae.taskId);assert.equal(uaeDrafts.length,2);assert.ok(uaeDrafts.every(d=>d.mode==='live'&&/e.?commerce|e.?kommerce/i.test(d.body)&&/website|web.?site/i.test(d.body)));assert.equal(state.mailActions.length,0);
+ evidence.status='passed';evidence.reason='Real Gemini connection, original Roman Urdu city check and UAE hardware-store website-service selection/personalized draft persistence passed against isolated imported samples. No email sent.';
  }catch(error){evidence.status='failed';evidence.reason=error.message;process.exitCode=1;}
  finally{child.kill();await new Promise(r=>{if(child.exitCode!==null)r();else child.once('exit',r);});rmSync(directory,{recursive:true,force:true});writeFileSync('test-results/live-ai-verification.json',JSON.stringify(evidence,null,2));console.log(evidence.reason);}
 }

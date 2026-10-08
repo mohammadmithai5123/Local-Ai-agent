@@ -1,5 +1,9 @@
 # Roadmap
 
+## Guided setup milestone — implemented, account checks pending
+
+Five evidence-based setup steps, private local instructions/official links, callback diagnostics, bounded UAE hardware sample verification, country/industry import/filter support, persisted receipts and private Git history/tool checks are implemented. Demo workflow is locally verified; live Gemini, Google consent/refresh, optional authorized email, browser UX and private GitHub access remain pending. No new dependencies or integrations were added. WhatsApp and LinkedIn remain deferred.
+
 ## Foundation — implemented, demo and local validation
 
 - Responsive React dashboard, guided setup, persistent chat, editable SQLite leads and source tracking.

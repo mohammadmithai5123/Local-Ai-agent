@@ -8,7 +8,7 @@ import { openStore } from '../server/store.js';
 import { readFile, mapRows } from '../server/importer.js';
 import { Supervisor } from '../server/supervisor.js';
 import { RateLimit, planSchema } from '../server/provider.js';
-function fixture(path = ':memory:') { const db = openStore(path); db.prepare('INSERT INTO leads VALUES(?,?,?,?,?,?,?)').run('lead', 'Ayesha', 'a@example.com', 'Studio', 'Karachi', '', 'test'); db.prepare('INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?)').run('task', 'request', 'draft banao', 'demo', 'queued', null, null, new Date().toISOString()); db.prepare('INSERT INTO steps(task_id,lead_id,state) VALUES(?,?,?)').run('task', 'lead', 'pending'); return db; }
+function fixture(path = ':memory:') { const db = openStore(path); db.prepare('INSERT INTO leads(id,name,email,company,city,notes,source) VALUES(?,?,?,?,?,?,?)').run('lead', 'Ayesha', 'a@example.com', 'Studio', 'Karachi', '', 'test'); db.prepare('INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?)').run('task', 'request', 'draft banao', 'demo', 'queued', null, null, new Date().toISOString()); db.prepare('INSERT INTO steps(task_id,lead_id,state) VALUES(?,?,?)').run('task', 'lead', 'pending'); return db; }
 test('CSV quoted multiline, mapping errors, formulas, duplicates and email normalization', async () => {
     const file = await readFile('leads.csv', Buffer.from('name,email,notes\nA,a@example.com,"Hello,\nworld"\nB,A@example.com,x\nC,bad,x\n=CMD,c@example.com,x'));
     const result = mapRows(file.rows, { name: 0, email: 1, notes: 2 }, new Set());

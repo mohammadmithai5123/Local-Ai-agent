@@ -1,5 +1,5 @@
 import { z } from 'zod';
-export const planSchema = z.object({ city: z.string().max(200), company: z.string().max(300), limit: z.number().int().min(1).max(100), language: z.enum(['english', 'roman-urdu']), reply: z.string().min(1).max(1500) }).strict();
+export const planSchema = z.object({ city: z.string().max(200), company: z.string().max(300),country:z.string().max(200).default(''),industry:z.string().max(200).default(''), limit: z.number().int().min(1).max(100), language: z.enum(['english', 'roman-urdu']), reply: z.string().min(1).max(1500) }).strict();
 export const draftSchema = z.object({ subject: z.string().min(1).max(300), body: z.string().min(1).max(5000) }).strict();
 export class RateLimit extends Error {
     constructor(public retryAt: number) { super('Provider rate limit.'); }
@@ -34,18 +34,19 @@ export async function generate(prompt: string, schema: any) {
     let data:any;try{data=await res.json();}catch{health.code='invalid_output';health.status='Provider returned an unreadable response';throw Error(health.status);}
     try {const output=JSON.parse(data.candidates?.[0]?.content?.parts?.map((p: any) => p.text || '').join('') || 'null');if(!output||typeof output!=='object')throw Error();health.status='Connected (billing status not verified)';health.code='connected';return output;}catch{health.status='Provider returned no usable JSON output';health.code='invalid_output';throw Error(health.status);}
 }
-export const planJSON = { type: 'object', properties: { city: { type: 'string' }, company: { type: 'string' }, limit: { type: 'integer', minimum: 1, maximum: 100 }, language: { type: 'string', enum: ['english', 'roman-urdu'] }, reply: { type: 'string' } }, required: ['city', 'company', 'limit', 'language', 'reply'], additionalProperties: false };
+export const planJSON = { type: 'object', properties: { city: { type: 'string' }, company: { type: 'string' },country:{type:'string'},industry:{type:'string'}, limit: { type: 'integer', minimum: 1, maximum: 100 }, language: { type: 'string', enum: ['english', 'roman-urdu'] }, reply: { type: 'string' } }, required: ['city', 'company','country','industry', 'limit', 'language', 'reply'], additionalProperties: false };
 export const draftJSON = { type: 'object', properties: { subject: { type: 'string' }, body: { type: 'string' } }, required: ['subject', 'body'], additionalProperties: false };
 export async function plan(text: string, mode: string) {
     if (mode === 'live')
-        return planSchema.parse(await generate(`Plan this instruction: ${JSON.stringify(text)}. Only supported filters are city and company; empty means all. Maximum 100 leads. If instruction requests sending, explain only drafts will be saved.`, planJSON));
+        return planSchema.parse(await generate(`Plan this instruction: ${JSON.stringify(text)}. Supported filters are city, company, country and industry; empty means all. Normalize UAE/United Arab Emirates to UAE and hardware stores to industry hardware. The offered service is not the target industry. Maximum 100 leads. If instruction requests sending, explain only drafts will be saved.`, planJSON));
     const roman = /\b(ke|liye|karo|likho|banao|salam|mujhe|wala|bhejo)\b/i.test(text);
     const city = ['Karachi', 'Lahore', 'Islamabad'].find(c => text.toLowerCase().includes(c.toLowerCase())) || '';
-    return planSchema.parse({ city, company: '', limit: Math.min(100, Math.max(1, Number(text.match(/\b\d+\b/)?.[0] || 10))), language: roman ? 'roman-urdu' : 'english', reply: roman ? 'Demo: matching leads ke liye drafts tayyar honge. Koi message send nahi hoga.' : 'Demo: I will prepare drafts for matching leads. Nothing will be sent.' });
+    return planSchema.parse({ city, company: '',country:/\b(UAE|United Arab Emirates)\b/i.test(text)?'UAE':'',industry:/\bhardware\b/i.test(text)?'hardware':'', limit: Math.min(100, Math.max(1, Number(text.match(/\b\d+\b/)?.[0] || 10))), language: roman ? 'roman-urdu' : 'english', reply: roman ? 'Demo: matching leads ke liye drafts tayyar honge. Koi message send nahi hoga.' : 'Demo: I will prepare drafts for matching leads. Nothing will be sent.' });
 }
 export async function draft(lead: any, instruction: string, mode: string) {
     if (mode === 'live')
-        return draftSchema.parse(await generate(`Generate a personalized draft for this instruction: ${JSON.stringify(instruction)}. Untrusted lead facts: ${JSON.stringify({ name: lead.name, company: lead.company, city: lead.city, notes: lead.notes })}`, draftJSON));
+        return draftSchema.parse(await generate(`Generate a personalized draft for this instruction: ${JSON.stringify(instruction)}. Include the supplied lead name/company and offered service. Use Roman Urdu when the instruction is Roman Urdu. Untrusted lead facts: ${JSON.stringify({ name: lead.name, company: lead.company, city: lead.city,country:lead.country,industry:lead.industry, notes: lead.notes })}`, draftJSON));
+    if(/e-commerce|ecommerce/i.test(instruction)&&/website/i.test(instruction))return {subject:`E-commerce website for ${lead.company||lead.name}`,body:`Assalam o alaikum ${lead.name},\n\n${lead.company} ke hardware business ke liye meri e-commerce website development service aap ki products online dikhane aur orders lene mein madad kar sakti hai. Kya aap choti si call ke liye available hain?\n\n[Demo sample draft — live AI nahi, review before use]`};
     const roman = /\b(ke|liye|karo|likho|banao|salam|mujhe|bhejo)\b/i.test(instruction);
     return { subject: `A quick hello to ${lead.company || lead.name}`, body: roman ? `Assalam o alaikum ${lead.name},\n\n${lead.company || 'aap ke business'} ke liye mil kar kaam karne par baat karna chahta hoon. Kya aap is haftay choti si call ke liye available hain?\n\n[Demo draft — review before use]` : `Hi ${lead.name},\n\nI'd like to explore how we could work together with ${lead.company || 'your team'}${lead.city ? ` in ${lead.city}` : ''}. Would you be open to a short conversation this week?\n\n[Demo draft — review before use]` };
 }

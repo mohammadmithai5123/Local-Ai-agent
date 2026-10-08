@@ -10,6 +10,8 @@ import { Supervisor } from './supervisor.js';
 import { Gmail,TokenVault } from './gmail.js';
 import { Campaigns } from './campaigns.js';
 import { dirname,join } from 'node:path';
+import { GuidedSetup } from './setup.js';
+import { selectLeads } from './selection.js';
 // Load local environment without printing values or exposing them to Vite.
 if (existsSync('.env'))
     process.loadEnvFile('.env');
@@ -17,6 +19,7 @@ const db = openStore(process.env.DB_PATH || 'data/workbench.sqlite');
 const supervisor = new Supervisor(db);
 const gmail = new Gmail(new TokenVault(join(dirname(process.env.DB_PATH||'data/workbench.sqlite'),'credentials')));
 const campaigns = new Campaigns(db,gmail);
+const setup=new GuidedSetup(db,gmail,supervisor);
 const uploads = new Map<string, {
     name: string;
     headers: string[];
@@ -67,14 +70,15 @@ const server = createServer(async (req, res) => {
         if(req.method==='GET'&&url.pathname==='/api/gmail/callback') {
             res.setHeader('Referrer-Policy','no-referrer');
             const cookie=req.headers.cookie?.split(';').map(v=>v.trim()).find(v=>v.startsWith('gmail_oauth='))?.slice('gmail_oauth='.length)||'';
-            try {if(url.searchParams.has('error'))throw Error('Google consent was declined.');await gmail.complete(url.searchParams.get('state')||'',cookie,url.searchParams.get('code')||'');campaigns.pauseAll('Gmail connection changed. Existing campaign authorization must be reviewed.');}
+            try {if(url.searchParams.has('error'))throw Error('Google consent was declined.');await gmail.complete(url.searchParams.get('state')||'',cookie,url.searchParams.get('code')||'');setup.record('callback','verified','Google authorization code exchange passed using the configured local callback.',setup.gmailContext());campaigns.pauseAll('Gmail connection changed. Existing campaign authorization must be reviewed.');}
             catch {gmail.status='OAuth connection failed or consent declined. Start connection again.';}
             res.setHeader('Set-Cookie','gmail_oauth=; HttpOnly; SameSite=Lax; Path=/api/gmail/callback; Max-Age=0');res.writeHead(303,{Location:'/'});res.end();return;
         }
         if (req.method === 'GET' && url.pathname === '/api/state') {
-            send(state());
+            send({...state(),setup:setup.summary(url.origin)});
             return;
         }
+        if(req.method==='GET'&&url.pathname==='/api/setup'){send(setup.summary(url.origin));return;}
         if (req.method !== 'POST') {
             send({ error: 'Not found' }, 404);
             return;
@@ -90,8 +94,10 @@ const server = createServer(async (req, res) => {
             chunks.push(chunk);
         }
         const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        if(url.pathname==='/api/setup/workflow'){const data=z.object({mode:z.enum(['demo','live']),requestId:z.string().uuid()}).parse(body);send(await setup.verifyWorkflow(data.mode,data.requestId));return;}
+        if(url.pathname==='/api/setup/repository'){send(await setup.repositoryCheck());return;}
         if(url.pathname==='/api/gmail/connect'){if(!host.startsWith('localhost:'))throw Error('Open this app at http://localhost:'+String(process.env.PORT||3000)+' before connecting Gmail.');const auth=gmail.begin();res.setHeader('Set-Cookie',`gmail_oauth=${auth.state}; HttpOnly; SameSite=Lax; Path=/api/gmail/callback; Max-Age=600`);send({url:auth.url});return;}
-        if(url.pathname==='/api/gmail/check'){try{send(await gmail.check());}catch(e){send({error:e instanceof Error&&e.name==='MailError'?e.message:'Gmail authentication check failed. Reconnect or check network access.'},400);}return;}
+        if(url.pathname==='/api/gmail/check'){try{const checked=await gmail.check();setup.record('gmail','verified','Actual Google refresh-token exchange passed. Gmail.send only; sending and configured sender identity remain unverified.',setup.gmailContext());send(checked);}catch(e){const detail=e instanceof Error&&e.name==='MailError'?e.message:'Gmail authentication check failed. Reconnect or check network access.';try{setup.record('gmail','attention',detail,setup.gmailContext());}catch{}send({error:detail},400);}return;}
         if(url.pathname==='/api/gmail/disconnect'){campaigns.pauseAll('Gmail disconnected. Sending is paused.');send(await gmail.disconnect());return;}
         if(url.pathname==='/api/campaigns/create'){send(campaigns.create(body));return;}
         if(url.pathname==='/api/campaigns/test'){send(campaigns.createTest(body));return;}
@@ -123,7 +129,7 @@ const server = createServer(async (req, res) => {
                 db.exec('BEGIN');
                 try {
                     for (const lead of result.valid)
-                        db.prepare('INSERT INTO leads VALUES(?,?,?,?,?,?,?)').run(randomUUID(), lead.name, lead.email, lead.company, lead.city, lead.notes, file.name);
+                        db.prepare('INSERT INTO leads(id,name,email,company,city,notes,source,country,industry) VALUES(?,?,?,?,?,?,?,?,?)').run(randomUUID(), lead.name, lead.email, lead.company, lead.city, lead.notes, file.name,lead.country,lead.industry);
                     db.exec('COMMIT');
                 }
                 catch (e) {
@@ -138,18 +144,18 @@ const server = createServer(async (req, res) => {
         if (url.pathname === '/api/leads/edit') {
             const { id, ...data } = z.object({ id: z.string().uuid() }).passthrough().parse(body);
             const l = leadSchema.parse(data);
-            db.prepare('UPDATE leads SET name=?,email=?,company=?,city=?,notes=? WHERE id=?').run(l.name, l.email, l.company, l.city, l.notes, id);
+            db.prepare('UPDATE leads SET name=?,email=?,company=?,city=?,notes=?,country=?,industry=? WHERE id=?').run(l.name, l.email, l.company, l.city, l.notes,l.country,l.industry, id);
             send({ ok: true });
             return;
         }
         if (url.pathname === '/api/demo') {
             for (const [name, email, company, city] of [['Ayesha Khan', 'ayesha@example.com', 'Harbor Design', 'Karachi'], ['Bilal Ahmed', 'bilal@example.com', 'North Studio', 'Lahore'], ['Sara Ali', 'sara@example.com', 'Cedar Works', 'Karachi']])
-                db.prepare('INSERT OR IGNORE INTO leads VALUES(?,?,?,?,?,?,?)').run(randomUUID(), name, email, company, city, 'Sample lead — demo only', 'Demo samples');
+                db.prepare('INSERT OR IGNORE INTO leads(id,name,email,company,city,notes,source) VALUES(?,?,?,?,?,?,?)').run(randomUUID(), name, email, company, city, 'Sample lead — demo only', 'Demo samples');
             send({ ok: true });
             return;
         }
         if (url.pathname === '/api/health') {
-            draftSchema.parse(await generate('Return a test draft with subject Connection test and body Test only. No personal data.', draftJSON));
+            try{draftSchema.parse(await generate('Return a test draft with subject Connection test and body Test only. No personal data.', draftJSON));setup.record('ai','verified','Actual Gemini structured-response check passed. Billing remains user-confirmed, not API-verified.',setup.aiContext());}catch(e){setup.record('ai','attention',connectionState().status,setup.aiContext());throw e;}
             send({ ok: true });
             return;
         }
@@ -175,7 +181,7 @@ const server = createServer(async (req, res) => {
             }
             try {
                 const p = await plan(text, mode);
-                const leads = db.prepare('SELECT * FROM leads ORDER BY name').all().filter((l: any) => (!p.city || l.city.toLowerCase().includes(p.city.toLowerCase())) && (!p.company || l.company.toLowerCase().includes(p.company.toLowerCase()))).slice(0, p.limit);
+                const leads = selectLeads(db.prepare('SELECT * FROM leads ORDER BY name').all(),p);
                 const current = db.prepare('SELECT state FROM tasks WHERE id=?').get(id);
                 if (current?.state !== 'needs_user') {
                     send({ id });
@@ -219,6 +225,6 @@ const server = createServer(async (req, res) => {
         send({ error: e instanceof z.ZodError ? e.issues.map(i => i.message).join(';') : (e as Error).message.includes('UNIQUE') ? 'That email already exists.' : (e as Error).message }, 400);
     }
 });
-server.listen(Number(process.env.PORT || 3000), '127.0.0.1', () => console.log(`Workbench ready: http://localhost:${process.env.PORT || 3000} (${production ? 'production' : 'development'})`));
+server.listen(Number(process.env.PORT || 3000), '127.0.0.1', () => {console.log(`Workbench ready: http://localhost:${process.env.PORT || 3000} (${production ? 'production' : 'development'})`);setImmediate(()=>void setup.repositoryCheck().catch(()=>{}));});
 for (const signal of ['SIGINT', 'SIGTERM'] as const)
     process.on(signal, () => { clearInterval(timer); server.close(); void vite?.close(); setTimeout(() => process.exit(), 300).unref(); });

@@ -23,13 +23,17 @@ Stop the server with Ctrl+C. Do not run multiple servers against the same databa
 
 ## First workflow
 
+Start in **Setup** for five guided steps: free-tier AI, Gmail, draft verification, optional single email and private GitHub. Statuses come from backend evidence, not the presence of keys. Checks record their time; changed private configuration invalidates relevant evidence. Nothing on Setup creates a repository, pushes or sends mail.
+
+Run **Run labeled demo check** to import four clearly labeled synthetic samples and verify the exact UAE hardware-store instruction selects two leads and saves two personalized website-service drafts. This remains demo evidence, never a live pass. Samples are blocked from sending. After private AI setup, run **Check actual AI connection**, then **Run real live sample check**. Inspect Tasks for saved drafts. Map country and industry when importing your own leads for these filters.
+
 1. In Chat, load labeled demo samples, or in Leads upload CSV/XLSX.
 2. Map distinct name and email columns. Validate and inspect row errors. Import valid rows; duplicate emails are skipped, never overwritten.
 3. Try `Karachi ke 2 leads ke liye outreach drafts banao` in Chat.
 4. In Tasks, inspect the selected leads and press Start drafts. Use pause, resume or cancel as needed.
 5. Open a lead's saved draft. Nothing has been sent.
 
-Demo is deterministic, not live AI. It recognizes Karachi/Lahore/Islamabad, a numeric limit (default 10, max 100), and common Roman Urdu cues; arbitrary instructions are not interpreted. Live AI supports city/company filters and drafts, with server-validated structured responses. Refresh restores database history and progress; server restart pauses unfinished generation for manual review/resume. A plan interrupted by restart is marked failed and must be recreated.
+Demo is deterministic, not live AI. It recognizes Karachi/Lahore/Islamabad, a numeric limit (default 10, max 100), and common Roman Urdu cues; arbitrary instructions are not interpreted. Live AI supports city/company/country/industry filters and drafts, with server-validated structured responses. Refresh restores database history and progress; server restart pauses unfinished generation for manual review/resume. A plan interrupted by restart is marked failed and must be recreated.
 
 ## Private Gemini setup — optional
 
@@ -43,7 +47,7 @@ Copy-Item .env.example .env
 notepad .env
 ```
 
-Fill GEMINI_API_KEY in that file. Set FREE_TIER_CONFIRMED=true only after checking billing is disabled. Set AI_DATA_CONSENT=true only if sharing selected lead fields with Gemini is acceptable: free-tier content may be used to improve Google's products. Restart the server, use Connections → Check live connection, then select Live in Settings. The health check performs a small real text request without lead data and consumes quota. No key entry appears in the webpage. No fallback provider or paid API is used.
+Fill GEMINI_API_KEY in that file. Set FREE_TIER_CONFIRMED=true only after checking billing is disabled. Set AI_DATA_CONSENT=true only if sharing selected lead fields with Gemini is acceptable: free-tier content may be used to improve Google's products. Restart the server, use Setup → Check actual AI connection, then select Live in Settings. The health check performs a small real text request without lead data and consumes quota. No key entry appears in the webpage. No fallback provider or paid API is used.
 
 The API cannot reliably infer billing tier from a key. These local confirmations are the spending boundary: **do not use a key from a billed project**. The app does not manage billing. The model allowlist deliberately permits only the documented model; review official pricing before updating it. Failed live requests never fall back to demo.
 
@@ -56,7 +60,7 @@ npm.cmd run build
 node scripts/verify-live.mjs
 ```
 
-It performs real Gemini requests and consumes free quota, using two synthetic prospects imported into an isolated temporary database. It checks a Roman Urdu instruction selects Karachi rather than Lahore and saves an Ayesha/Harbor personalized draft. It never sends mail or changes your leads. Evidence is in ignored `test-results/live-ai-verification.json`. Missing configuration produces `blocked` (exit 2), not success. A failure or rate limit is reported honestly; no automatic fallback is used. Separately review language quality with your actual prospects after setup.
+It performs real Gemini requests and consumes free quota, using two synthetic prospects imported into an isolated temporary database. It checks a Roman Urdu instruction selects Karachi rather than Lahore and saves an Ayesha/Harbor personalized draft. It also verifies the exact UAE hardware-store instruction with four isolated labeled samples and two persisted website-service drafts. It never sends mail or changes your personal database. Evidence is in ignored `test-results/live-ai-verification.json`. Missing configuration produces `blocked` (exit 2), not success. A failure or rate limit is reported honestly; no automatic fallback is used. Separately review language quality with your actual prospects after setup.
 
 ## Gmail setup and campaigns
 
@@ -82,6 +86,8 @@ Previews remain in memory for 15 minutes, capped at 10. They disappear on restar
 - Browser verification was unavailable in this tool environment; see VERIFICATION.md for checks and limitations.
 
 ## GitHub
+
+The Setup screen inspects installed tooling, tracked files and reachable history with `node scripts/verify-history.mjs`. GitHub CLI is unavailable here; installed Git Credential Manager is not proof of authentication. No origin exists. Supply an existing private repository URL or create one with **Private** selected at https://github.com/new. Without GitHub CLI, the app honestly leaves repository privacy unverified; inspect its visibility in GitHub yourself. Do not put credentials in its URL. The check never pushes; verify a later push using `git ls-remote origin refs/heads/main` against `git rev-parse HEAD`.
 
 Source and documentation only belong in Git. Git Credential Manager is installed, but account authentication was not exercised. No repository was published and no remote was supplied. After creating a **private** GitHub repository yourself, review files and connect:
 
