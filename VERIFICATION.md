@@ -1,5 +1,11 @@
 # Verification — milestone 3, October 8, 2026
 
+## Authorized single-email result — October 9, 2026
+
+After the exact English preview was shown, the user explicitly instructed sending. Verified the immutable sender/recipient/subject/body, one action, zero attempts and no other active campaigns, then authorized that campaign only with maximum one send and a 15-minute expiry. Gmail accepted one API request, returned a message ID, and the durable action records sent with attempts=1 and no error. The private message ID and recipient/content remain in ignored SQLite and the local dashboard, not committed documentation. Inbox/spam delivery is still unverified pending the recipient's confirmation.
+
+Sending was enabled only for the test process; persisted .env was already false, and the app was restarted with sending false immediately afterward. Reopen confirmed the sent action/message ID and zero queued/sending test actions. Campaign state is completed; its single sent action remains closed and is not resendable. No retries occurred. No code changes were needed; checks were exact-preview matching, actual API outcome and durable disabled-state verification. User was asked to check inbox and spam.
+
 English preference/preview follow-up: user requested English outgoing email and outreach content. Added private OUTREACH_LANGUAGE=english override for future drafts and a draft-only test-preview revision guarded by digest, zero authorization, zero attempts and fixed recipient. Pending preview is English and remains unauthorized; no email sent. English live prompt behavior is implemented, while actual English-model language quality remains unverified until a future live run. Test recipient/content remain in ignored SQLite, not this document or Git.
 
 Real local API preview revision returned success; resulting action remains draft, attempts 0, no campaign authorization, and sending false. Build and 31 tests passed, including English demo output and rejection of stale-digest/attempted-preview edits. Browser visual rendering remains unverified; the exact saved preview is available on the existing Gmail campaign screen.
