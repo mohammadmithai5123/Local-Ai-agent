@@ -1,5 +1,7 @@
 # Roadmap
 
+October 8 connectivity follow-up: permanent IPv4-first launch flags, explicit upstream 503 diagnostics and clearer live verification startup/planning failures are implemented and tested. Actual Google metadata, minimal generation, structured JSON and the exact app health request each returned 200 during diagnosis; full workflow attempts also encountered intermittent 503. Successful small requests do not prove a completed workflow or billing tier.
+
 ## Guided setup milestone — implemented, account checks pending
 
 Five evidence-based setup steps, private local instructions/official links, callback diagnostics, bounded UAE hardware sample verification, country/industry import/filter support, persisted receipts and private Git history/tool checks are implemented. Demo workflow is locally verified; live Gemini, Google consent/refresh, optional authorized email, browser UX and private GitHub access remain pending. No new dependencies or integrations were added. WhatsApp and LinkedIn remain deferred.

@@ -26,6 +26,7 @@ export async function generate(prompt: string, schema: any) {
         throw new RateLimit(health.retryAt);
     }
     if (!res.ok) {
+        if(res.status===503){health.code='service_unavailable';health.status='Gemini temporarily unavailable (503). Retry manually later; no provider or demo fallback was used.';throw Error(health.status);}
         let reasons='';try {const data:any=await res.json();reasons=JSON.stringify(data.error?.details||[])+' '+String(data.error?.message||'');}catch{}
         health.code=res.status===401||/API_KEY_INVALID|API_KEY_EXPIRED|API key not valid|invalid API key/i.test(reasons)?'invalid_key':res.status===404?'unavailable_model':res.status===403?'access_denied':'provider_error';
         health.status=health.code==='invalid_key'?'Invalid or expired API key':health.code==='unavailable_model'?'Model unavailable for this API/project':health.code==='access_denied'?'Access denied: check project, region and API restrictions':`Provider rejected request (${res.status})`;

@@ -76,6 +76,8 @@ Previews remain in memory for 15 minutes, capped at 10. They disappear on restar
 
 ## Troubleshooting
 
+Windows launch commands now prefer IPv4 DNS results because this laptop's IPv6 route to Google timed out while IPv4 worked. TLS verification stays enabled. `503` is reported separately as temporary Gemini unavailability; it does not establish an invalid key or billing problem. Retry manually later, without changing provider or enabling billing. Official guidance: https://ai.google.dev/gemini-api/docs/troubleshooting. The live script allows up to 60 seconds for local startup and reports a failed planning task's actual sanitized reason.
+
 - Permission error with npm's shared cache: use the command above with the workspace `.npm-cache`.
 - Port occupied: privately set PORT=3001 in .env and restart. Open the matching localhost URL.
 - Live option disabled: check all three configuration values and restart. Keys are never sent to the browser.

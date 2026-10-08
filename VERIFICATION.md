@@ -1,5 +1,9 @@
 # Verification — milestone 3, October 8, 2026
 
+## Live connectivity follow-up (supersedes missing-configuration status below)
+
+The user provided console evidence showing Free tier and explicitly approved private confirmation/data-consent flags. The private configuration is present and remains Git-excluded. This laptop's IPv6 HTTPS route timed out; IPv4-first returned Google responses with normal TLS validation, and this preference is now in normal launchers and the live verification child. Actual model metadata, minimal generation, structured JSON and an exact app health request each returned HTTP 200. Full verification attempts also returned intermittent HTTP 503; small request success is not a full workflow pass. No billing was enabled and no messages were sent. The provider now distinguishes temporary 503 unavailability without retry/fallback; the script reports sanitized planning failures and allows 60 seconds for local startup. Build passed; 25 tests passed, including 503 non-retry and secret-leak prevention.
+
 ## Verified locally
 
 Production application at localhost:3000 also passed the guided demo HTTP check: four labeled synthetic leads imported, the two UAE hardware leads selected, two personalized demo drafts saved. Setup reports Configured but unverified for live workflow; sending remains false. Existing data is preserved.

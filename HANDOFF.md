@@ -1,5 +1,7 @@
 # Handoff for another chat — milestone 3
 
+Connectivity follow-up: private Gemini configuration now exists with the user's Free tier console evidence and explicit data consent; never print the key or read .env into tool output. IPv6 routing timed out, IPv4 worked, and launchers now persist IPv4-first. Direct Google metadata, minimal generation, structured JSON and exact health request passed 200; full live runs encountered intermittent 503. 503 has a separate safe diagnostic and no automatic retry/fallback. Build and 25 tests pass. Prior missing-configuration notes below describe the earlier milestone snapshot; do not treat small connection success as full workflow proof.
+
 Project: M:\Local Ai agent. Existing TypeScript/React/Vite/native Node HTTP/SQLite foundation preserved. Run npm.cmd run dev at http://localhost:3000; build/start with npm.cmd run build then npm.cmd start. No new framework or dependencies added.
 
 Milestone 3 adds the default Setup tab and five backend-evidence statuses, additive country/industry fields, bounded labeled UAE hardware sample verification with two personalized persisted drafts, configuration-bound receipts, callback-registration evidence separate from refresh, tracked/history audit and Git tooling/private-remote checks. No repo creation/push is automatic. Single test email is limited to one durable campaign. Original commit 1525e59 remains the ancestor; no existing data is deleted. Live workflow remains blocked without private config; demo success must never appear as live verification.

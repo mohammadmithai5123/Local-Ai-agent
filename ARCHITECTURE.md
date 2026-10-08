@@ -16,6 +16,8 @@ Chat reserves a durable unique request ID and persists the user message before c
 
 ## Provider boundary
 
+Launchers prefer IPv4 DNS results to avoid the observed Windows IPv6 routing timeout. HTTP 503 produces `service_unavailable` with a sanitized temporary-unavailability message, without automatic retry or fallback. It remains distinct from network failure, invalid key, quota and model availability. TLS validation is unchanged.
+
 Demo adapter is deterministic and explicitly labeled in UI, chat, task and draft metadata. Live adapter uses Gemini structured JSON output and validates responses with Zod. It performs one planning request and at most one request per draft attempt; timeout is 30 seconds. No tool execution, browser action, sending, or recursive AI loops exist. Prompt instructions classify lead fields as untrusted data; output is rendered as React-escaped text.
 
 Keys load only from server `.env`; no VITE_ secret variable is used. Live calls require a configured key, unbilled-project attestation and data consent. Only the currently documented free-tier model is allowlisted. API keys do not expose billing tier, so account confirmation remains necessary. No billing API, purchase, automatic upgrade or alternative provider is implemented. Free-tier data terms and account availability must be reviewed by the user.

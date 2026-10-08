@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node scripts/run.mjs dev",
     "build": "tsc --noEmit && tsc -p tsconfig.runtime.json && vite build",
-    "start": "node --experimental-sqlite .runtime/server/index.js --production",
+    "start": "node --dns-result-order=ipv4first --experimental-sqlite .runtime/server/index.js --production",
     "test": "node scripts/run.mjs test"
   },
   "dependencies": {
