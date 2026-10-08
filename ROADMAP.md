@@ -1,5 +1,7 @@
 # Roadmap
 
+Latest milestone: bounded single-layer 503 retry, durable paused planning/draft resume, cancel-aware waits/requests, safe stage diagnostics and explicit configurable same-provider Flash-Lite option are implemented. Live Flash-Lite one-lead and small multi-lead Roman Urdu drafts passed; Flash 3.8 drafting was still 503-blocked. Browser and Gmail account/send verification remain pending. No automatic fallback or paid usage.
+
 October 8 connectivity follow-up: permanent IPv4-first launch flags, explicit upstream 503 diagnostics and clearer live verification startup/planning failures are implemented and tested. Actual Google metadata, minimal generation, structured JSON and the exact app health request each returned 200 during diagnosis; full workflow attempts also encountered intermittent 503. Successful small requests do not prove a completed workflow or billing tier.
 
 ## Guided setup milestone — implemented, account checks pending
@@ -10,8 +12,8 @@ Five evidence-based setup steps, private local instructions/official links, call
 
 - Responsive React dashboard, guided setup, persistent chat, editable SQLite leads and source tracking.
 - CSV/XLSX preview/mapping/validation, skipped errors and duplicates; no executed formulas.
-- Gemini free-tier adapter and structured validation, pending private account verification. No Groq adapter yet: one provider minimizes setup and dependencies.
-- English/Roman Urdu planning (live awaiting key); explicitly limited deterministic demo.
+- Gemini free-tier adapter and structured validation, live Flash-Lite sample verification passed. No Groq adapter yet: one provider minimizes setup and dependencies.
+- English/Roman Urdu planning (live sample verified); explicitly limited deterministic demo.
 - Durable per-lead draft workflow, task controls, restart recovery, bounded rate-limit retries and activity.
 - Gmail OAuth/sending integration and campaign ledger are implemented, with actual account consent and send verification blocked on private configuration. WhatsApp/LinkedIn are not implemented.
 - Browser layout/IME checks remain unverified because no browser automation surface was available.

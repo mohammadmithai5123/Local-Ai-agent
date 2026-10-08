@@ -5,7 +5,7 @@ import { resolve, extname } from 'node:path';
 import { z } from 'zod';
 import { openStore, event } from './store.js';
 import { readFile, mapRows, leadSchema } from './importer.js';
-import { plan, liveEnabled, connectionState, generate, draftJSON, draftSchema, RateLimit } from './provider.js';
+import { plan, liveEnabled, connectionState, generate, draftJSON, draftSchema, RateLimit, requestMetadata } from './provider.js';
 import { Supervisor } from './supervisor.js';
 import { Gmail,TokenVault } from './gmail.js';
 import { Campaigns } from './campaigns.js';
@@ -29,7 +29,7 @@ const uploads = new Map<string, {
 const timer = setInterval(() => {void supervisor.tick().catch(() => console.error('Supervisor database operation failed'));if(process.env.GMAIL_ENABLE_SENDING==='true')void campaigns.tick().catch(()=>console.error('Gmail ledger operation failed; inspect persisted outcomes'));}, 700);
 const production = process.argv.includes('--production');
 const vite = production ? null : await (await import('vite')).createServer({ server: { middlewareMode: true, host: '127.0.0.1',fs:{deny:['**/.env','**/.env.*','**/.git/**','**/*.{crt,pem}','**/data/**','**/credentials/**','**/uploads/**','**/sessions/**','**/.npm-cache/**','**/*.sqlite*','**/client_secret*.json','**/*token*.json']} }, appType: 'spa' });
-function state() { return { leads: db.prepare('SELECT * FROM leads ORDER BY name').all(), chat: db.prepare('SELECT * FROM chat ORDER BY created,rowid').all(), tasks: db.prepare('SELECT t.*,(SELECT count(*) FROM steps WHERE task_id=t.id) total,(SELECT count(*) FROM steps WHERE task_id=t.id AND state=\'done\') done FROM tasks t ORDER BY created DESC').all(), steps: db.prepare('SELECT * FROM steps').all(), drafts: db.prepare('SELECT * FROM drafts ORDER BY created DESC').all(), events: db.prepare('SELECT * FROM events ORDER BY id DESC LIMIT 30').all(), connection: connectionState(), integrations: { gmail: gmail.summary().status, whatsapp: 'Not implemented', linkedin: 'Not implemented' }, gmail:{...gmail.summary(),sendingEnabled:process.env.GMAIL_ENABLE_SENDING==='true'},...campaigns.snapshot() }; }
+function state() { return { leads: db.prepare('SELECT * FROM leads ORDER BY name').all(), chat: db.prepare('SELECT * FROM chat ORDER BY created,rowid').all(), tasks: db.prepare('SELECT t.*,EXISTS(SELECT 1 FROM task_plans p WHERE p.task_id=t.id) planning,(SELECT count(*) FROM steps WHERE task_id=t.id) total,(SELECT count(*) FROM steps WHERE task_id=t.id AND state=\'done\') done FROM tasks t ORDER BY created DESC').all(), steps: db.prepare('SELECT * FROM steps').all(), drafts: db.prepare('SELECT * FROM drafts ORDER BY created DESC').all(), events: db.prepare('SELECT * FROM events ORDER BY id DESC LIMIT 30').all(), connection: connectionState(), aiRequests:requestMetadata, integrations: { gmail: gmail.summary().status, whatsapp: 'Not implemented', linkedin: 'Not implemented' }, gmail:{...gmail.summary(),sendingEnabled:process.env.GMAIL_ENABLE_SENDING==='true'},...campaigns.snapshot() }; }
 const server = createServer(async (req, res) => {
     res.setHeader('X-Frame-Options','DENY');
     const host = req.headers.host || '';
@@ -173,43 +173,14 @@ const server = createServer(async (req, res) => {
             try {
                 db.prepare('INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?)').run(id, requestId, text, mode, 'needs_user', 'Planning your request', null, now);
                 db.prepare('INSERT INTO chat VALUES(?,?,?,?)').run(requestId, 'user', text, now);
+                db.prepare('INSERT INTO task_plans(task_id,scope) VALUES(?,NULL)').run(id);
                 db.exec('COMMIT');
             }
             catch (e) {
                 db.exec('ROLLBACK');
                 throw e;
             }
-            try {
-                const p = await plan(text, mode);
-                const leads = selectLeads(db.prepare('SELECT * FROM leads ORDER BY name').all(),p);
-                const current = db.prepare('SELECT state FROM tasks WHERE id=?').get(id);
-                if (current?.state !== 'needs_user') {
-                    send({ id });
-                    return;
-                }
-                db.exec('BEGIN');
-                try {
-                    for (const l of leads)
-                        db.prepare('INSERT INTO steps(task_id,lead_id,state) VALUES(?,?,?)').run(id, l.id, 'pending');
-                    db.prepare("UPDATE tasks SET state='paused',reason=? WHERE id=?").run(leads.length ? 'Review the selected recipients, then Start to generate drafts.' : 'No matching leads. Import or edit leads and create a new request.', id);
-                    db.prepare('INSERT INTO chat VALUES(?,?,?,?)').run(randomUUID(), 'assistant', `${mode === 'demo' ? '[DEMO] ' : ''}${p.reply}\n${leads.length} lead(s) selected. Review the task and press Start.`, new Date().toISOString());
-                    event(db, id, `Plan ready: ${leads.length} leads selected (${mode}).`);
-                    db.exec('COMMIT');
-                }
-                catch (e) {
-                    db.exec('ROLLBACK');
-                    throw e;
-                }
-            }
-            catch (e) {
-                const current = db.prepare('SELECT state FROM tasks WHERE id=?').get(id);
-                if (current?.state !== 'needs_user') {
-                    send({ id });
-                    return;
-                }
-                db.prepare("UPDATE tasks SET state='failed',reason=? WHERE id=?").run(e instanceof RateLimit ? `Planning rate limited. Retry no earlier than ${new Date(e.retryAt).toISOString()}. Create a new request when ready.` : 'Planning failed. Check connection and try a new request.', id);
-                db.prepare('INSERT INTO chat VALUES(?,?,?,?)').run(randomUUID(), 'assistant', 'Planning failed; no drafts generated. See the task for details.', new Date().toISOString());
-            }
+            void supervisor.planTask(id).catch(()=>console.error('Planning database operation failed; inspect task state.'));
             send({ id });
             return;
         }

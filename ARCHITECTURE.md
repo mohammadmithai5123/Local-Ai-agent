@@ -1,5 +1,17 @@
 # Architecture
 
+## Bounded live workflow retry
+
+Chat atomically saves task, planning marker and user message before returning the task ID. Planning continues asynchronously so controls stay usable while the provider retries; the client polls its persisted state. Planning marker scope constrains guided samples to their own IDs. An in-flight planning task can be paused/cancelled; resume waits for the existing provider lock rather than launching concurrent requests.
+
+503 retries exist only in the provider layer: at most three HTTP attempts per planning/draft operation, 90 seconds total including serialized queue time, each request at most 30 seconds. Retry-After seconds/date is honored; otherwise exponential delay starts at one second with equal jitter (50–100%), doubling on the next retry. A delay exceeding the remaining budget stops automatic attempts and preserves a manual Retry-After hold. Only one Gemini request runs at a time. Existing 429 supervisor handling remains separate; the provider never retries 429. No automatic model/provider switch occurs.
+
+Planning is durably represented by additive task_plans (optional sample ID scope). Success atomically stores recipient steps, removes the planning marker and pauses for review. 503 exhaustion leaves the marker and pauses with the failing stage. Resume planning performs a new bounded cycle then returns to review; it cannot complete a zero-step interrupted plan. Draft exhaustion preserves pending steps and pauses with no scheduled wakeup. Resume processes only pending steps; the existing unique draft constraint/transaction remains. task_retry_holds persists provider not-before timestamps across restart. Pause/cancel interrupts retry waits, aborts an active provider request and discards its result. Cancelled tasks cannot resume.
+
+Safe request telemetry is an in-memory ring (100 entries): model, endpoint, stage, payload byte count, output cap, structured-output flag, timeout, concurrency, attempt, HTTP status and duration. API state exposes only those metrics, never prompt/lead/message content, keys, headers or raw upstream errors. Draft calls contain one selected lead, never the database. Output cap is 2,048 tokens; structured JSON and Zod validation remain required. Planning explicitly forbids inferred country/industry/company filters when unspecified.
+
+Explicit GEMINI_MODEL choices are gemini-3.8-flash and gemini-3.5-flash-lite, checked against official free-tier pricing. The model is shown in Settings and connection state; changes require private configuration and restart, invalidate setup receipts and never happen on request failure. This workspace explicitly selected Flash-Lite after persistent Flash draft 503s and account model metadata verification. Billing remains user-attested, not API-established. Live Flash-Lite one-lead and two-lead runs are verified; this does not establish future availability for either model.
+
 ## Components and flow
 
 Setup is the default UI tab. Its five statuses are backed by real connection/workflow/repository checks. SQLite `setup_checks` stores timestamped receipts and private server-only configuration fingerprints; fingerprints are withheld from frontend responses and changing keys/consent/model/connection invalidates corresponding evidence. Successful Google callback exchange is recorded separately from token refresh; local callback matching alone does not establish console registration. Repository checks inspect tracked files/history, tool availability and, when installed/authenticated, GitHub CLI private metadata plus Git transport. They never create repositories or push.
@@ -16,7 +28,7 @@ Chat reserves a durable unique request ID and persists the user message before c
 
 ## Provider boundary
 
-Launchers prefer IPv4 DNS results to avoid the observed Windows IPv6 routing timeout. HTTP 503 produces `service_unavailable` with a sanitized temporary-unavailability message, without automatic retry or fallback. It remains distinct from network failure, invalid key, quota and model availability. TLS validation is unchanged.
+Launchers prefer IPv4 DNS results to avoid the observed Windows IPv6 routing timeout. HTTP 503 produces `service_unavailable` with a sanitized temporary-unavailability message, with the bounded retry described above and no fallback. It remains distinct from network failure, invalid key, quota and model availability. TLS validation is unchanged.
 
 Demo adapter is deterministic and explicitly labeled in UI, chat, task and draft metadata. Live adapter uses Gemini structured JSON output and validates responses with Zod. It performs one planning request and at most one request per draft attempt; timeout is 30 seconds. No tool execution, browser action, sending, or recursive AI loops exist. Prompt instructions classify lead fields as untrusted data; output is rendered as React-escaped text.
 

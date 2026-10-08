@@ -39,7 +39,7 @@ Demo is deterministic, not live AI. It recognizes Karachi/Lahore/Islamabad, a nu
 
 Official documentation checked October 8, 2026: [pricing](https://ai.google.dev/gemini-api/docs/pricing), [billing](https://ai.google.dev/gemini-api/docs/billing), [rate limits](https://ai.google.dev/gemini-api/docs/rate-limits), [structured output](https://ai.google.dev/gemini-api/docs/structured-output). The current pricing page lists standard `gemini-3.8-flash` text input/output as free tier. Availability is account/region/quota dependent and is not guaranteed.
 
-No account was available in this environment; no live key was used or live health claimed. In [Google AI Studio](https://aistudio.google.com/), verify eligibility and an **unbilled** project. Do not enable billing. Then privately:
+The initial milestone had no private account configuration. Live sample verification is now passed on the explicitly selected Flash-Lite model; see VERIFICATION.md for stages and measured results. In [Google AI Studio](https://aistudio.google.com/), verify eligibility and an **unbilled** project. Do not enable billing. Then privately:
 
 ```powershell
 # Only if .env is absent; preserve existing credentials:
@@ -49,7 +49,7 @@ notepad .env
 
 Fill GEMINI_API_KEY in that file. Set FREE_TIER_CONFIRMED=true only after checking billing is disabled. Set AI_DATA_CONSENT=true only if sharing selected lead fields with Gemini is acceptable: free-tier content may be used to improve Google's products. Restart the server, use Setup → Check actual AI connection, then select Live in Settings. The health check performs a small real text request without lead data and consumes quota. No key entry appears in the webpage. No fallback provider or paid API is used.
 
-The API cannot reliably infer billing tier from a key. These local confirmations are the spending boundary: **do not use a key from a billed project**. The app does not manage billing. The model allowlist deliberately permits only the documented model; review official pricing before updating it. Failed live requests never fall back to demo.
+The API cannot reliably infer billing tier from a key. These local confirmations are the spending boundary: **do not use a key from a billed project**. The app does not manage billing. The model allowlist deliberately permits only the documented free-tier models; review official pricing before updating it. Failed live requests never fall back to demo.
 
 Before setting FREE_TIER_CONFIRMED, inspect the selected project's API tier in AI Studio and its Billing page in Google Cloud Console; confirm it has no linked billing account/paid tier. A successful model request cannot establish this. Do not use an account with uncertain billing status. Connection diagnostics distinguish missing key, consent required, invalid/expired key, unavailable model, access restrictions, rate limit and network failure without returning provider payloads or secrets.
 
@@ -76,7 +76,11 @@ Previews remain in memory for 15 minutes, capped at 10. They disappear on restar
 
 ## Troubleshooting
 
-Windows launch commands now prefer IPv4 DNS results because this laptop's IPv6 route to Google timed out while IPv4 worked. TLS verification stays enabled. `503` is reported separately as temporary Gemini unavailability; it does not establish an invalid key or billing problem. Retry manually later, without changing provider or enabling billing. Official guidance: https://ai.google.dev/gemini-api/docs/troubleshooting. The live script allows up to 60 seconds for local startup and reports a failed planning task's actual sanitized reason.
+Latest live verification passed on explicitly configured `gemini-3.5-flash-lite`: one Roman Urdu sample draft, then two personalized UAE hardware website-service drafts. `gemini-3.8-flash` remains an allowed configuration choice but its draft stage exhausted three 503 attempts during diagnosis. Set GEMINI_MODEL privately to one of these documented free-tier models; Settings shows the current choice. No automatic fallback occurs. Keep the project unbilled; a request cannot prove billing status.
+
+503 now has a bounded provider-only retry: maximum three requests and 90 seconds per stage including queue time, honoring Retry-After or exponential backoff with jitter. After exhaustion the task pauses. Use **Resume planning** for an unfinished plan, then review its selection and start drafts; use Resume/Start drafts for pending drafts. Completed steps stay saved. A provider not-before hold prevents early manual resume. Pause/cancel stops further attempts. Safe API telemetry contains request sizes/timing/status only, never lead content or secrets. A token/output validation failure remains a failure.
+
+Windows launch commands prefer IPv4 DNS results because this laptop's IPv6 route to Google timed out while IPv4 worked. TLS verification stays enabled. `503` does not establish an invalid key or billing problem. Official guidance: https://ai.google.dev/gemini-api/docs/troubleshooting. The live script allows up to 60 seconds for startup and distinguishes connectivity, planning, first saved live draft and full sample completion.
 
 - Permission error with npm's shared cache: use the command above with the workspace `.npm-cache`.
 - Port occupied: privately set PORT=3001 in .env and restart. Open the matching localhost URL.
