@@ -1,3 +1,13 @@
+## Current chat/tool milestone (supersedes historical behavior below)
+
+POST /api/chat atomically persists a unique chat_requests receipt and user text, then returns promptly. The existing single-lock Supervisor cooperatively dispatches ChatEngine classification and durable tool_jobs before draft steps. Conversation/unsupported replies complete the receipt without a task. Lead draft plans create queued, non-sending tasks automatically. Tool jobs cover public discovery, selected CSV export and bounded saved-result analysis; no general-purpose command executor exists.
+
+Additive result_sets/result_rows/result_exports tables preserve inline results and CSV snapshots. Search pages/checkpoints are stored only in private SQLite, not state responses; completed search is not repeated when extraction resumes. One retrieved page is extracted per step; validation requires exact company/location/category evidence, associated contact evidence, safe source URLs and normalized-name deduplication. Missing contacts remain blank. Model/source text is untrusted and cannot authorize actions. CSV cells are quoted with doubled quotes and formula-prefix protection.
+
+Tavily uses native HTTPS Basic search, no SDK/dependency, one credit reservation per search and a local 100/month ceiling. Private key plus explicit free-plan/data-consent flags gate requests. Search has a 20-second cancellation-aware timeout, no automatic search retries; provider limits/errors pause visibly. Gemini retains its single-layer bounded retry. Resume uses persisted stage/cursor; late cancelled results are discarded. Unfinished work pauses on restart. This local scheduler needs the laptop/app running; it does not wake the computer or provide cloud uptime.
+
+Private backup schema v2 includes requests, tool checkpoints/results, export snapshots and search usage; v1 restore remains supported. Credentials, OAuth vault and authorizations remain excluded. Restore creates a new database, pauses work and never enables/resumes sending. Demo cleanup first exports a private backup and only removes explicitly identifiable synthetic records without live/sent references. Integration boundary declarations are disabled, not connected adapters. See INTEGRATIONS_AUDIT.md for scope/cost constraints.
+
 # Architecture
 
 ## Actual dashboard chat routing

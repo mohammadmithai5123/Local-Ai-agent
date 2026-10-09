@@ -5,6 +5,7 @@ import { TransientFailure, type RequestControl } from './transient.js';
 import { selectLeads } from './selection.js';
 export class Supervisor {
     busy = false;
+    tools?:()=>Promise<boolean>;
     constructor(public db: Store, public makeDraft = draft,public makePlan=plan) {
         db.prepare("UPDATE tasks SET state='paused',reason='Server restarted. Review and resume to continue.' WHERE state IN ('running','queued')").run();
         db.prepare("UPDATE steps SET state='pending' WHERE state='working'").run();
@@ -61,6 +62,7 @@ export class Supervisor {
             return;
         this.busy = true;
         try {
+            if(this.tools && await this.tools())return;
             this.db.prepare("UPDATE tasks SET state='queued',reason=NULL WHERE state='paused' AND next_retry IS NOT NULL AND next_retry<=?").run(Date.now());
             const task: any = this.db.prepare("SELECT * FROM tasks WHERE state IN ('queued','running') ORDER BY created LIMIT 1").get();
             if (!task)

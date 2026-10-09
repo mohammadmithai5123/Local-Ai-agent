@@ -20,6 +20,14 @@ export function openStore(path: string) {
     const leadColumns=db.prepare('PRAGMA table_info(leads)').all();
     for(const field of ['country','industry'])if(!leadColumns.some((c:any)=>c.name===field))db.exec(`ALTER TABLE leads ADD COLUMN ${field} TEXT NOT NULL DEFAULT ''`);
     if(!db.prepare('PRAGMA table_info(campaigns)').all().some((c:any)=>c.name==='sender')) db.exec("ALTER TABLE campaigns ADD COLUMN sender TEXT NOT NULL DEFAULT ''");
+    db.exec(`CREATE TABLE IF NOT EXISTS chat_requests(id TEXT PRIMARY KEY,text TEXT NOT NULL,mode TEXT NOT NULL,state TEXT NOT NULL,reason TEXT,task_id TEXT,result_set_id TEXT,created TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS tool_jobs(task_id TEXT PRIMARY KEY REFERENCES tasks(id),kind TEXT NOT NULL,args TEXT NOT NULL,stage TEXT NOT NULL,payload TEXT,cursor INTEGER NOT NULL DEFAULT 0);
+      CREATE TABLE IF NOT EXISTS result_sets(id TEXT PRIMARY KEY,request_id TEXT UNIQUE NOT NULL,title TEXT NOT NULL,origin TEXT NOT NULL,requested INTEGER NOT NULL,state TEXT NOT NULL,reason TEXT,created TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS result_rows(id TEXT PRIMARY KEY,set_id TEXT NOT NULL REFERENCES result_sets(id),position INTEGER NOT NULL,data TEXT NOT NULL,UNIQUE(set_id,position));
+      CREATE TABLE IF NOT EXISTS result_exports(id TEXT PRIMARY KEY,set_id TEXT UNIQUE NOT NULL REFERENCES result_sets(id),filename TEXT NOT NULL,created TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS search_usage(month TEXT PRIMARY KEY,used INTEGER NOT NULL);`);
+    if(!db.prepare('PRAGMA table_info(chat_requests)').all().some((c:any)=>c.name==='retry_at'))db.exec('ALTER TABLE chat_requests ADD COLUMN retry_at INTEGER');
+    if(!db.prepare('PRAGMA table_info(result_exports)').all().some((c:any)=>c.name==='content'))db.exec("ALTER TABLE result_exports ADD COLUMN content TEXT NOT NULL DEFAULT ''");
     return db;
 }
 export type Store = ReturnType<typeof openStore>;

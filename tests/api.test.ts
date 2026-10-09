@@ -31,12 +31,12 @@ for (const production of [true,false]) test(`real ${production?'production':'dev
         assert.equal(first.status, 200);
         const dupe = await call('chat', req);
         assert.equal(dupe.data.duplicate, true);
-        let state = (await call('state')).data;
+        let state = (await call('state')).data;const planningDeadline=Date.now()+10000;while(!state.tasks.length&&Date.now()<planningDeadline){await new Promise(r=>setTimeout(r,100));state=(await call('state')).data;}
         assert.equal(state.tasks.length, 1);
         assert.equal(state.chat.length, 2);
         assert.equal(state.tasks[0].total, 1);
         const id = state.tasks[0].id;
-        assert.equal((await call(`tasks/${id}/start`, {})).status, 200);
+        // Non-sending chat work starts automatically; Tasks is monitoring only.
         const deadline = Date.now() + 10000;
         do {
             await new Promise(r => setTimeout(r, 150));
@@ -44,6 +44,7 @@ for (const production of [true,false]) test(`real ${production?'production':'dev
         } while (state.tasks[0].state !== 'completed' && Date.now() < deadline);
         assert.equal(state.tasks[0].state, 'completed');
         assert.equal(state.drafts.length, 1);
+        const csvRequest={requestId:randomUUID(),text:'Inki CSV bana do',mode:'demo'};assert.equal((await call('chat',csvRequest)).status,200);const csvDeadline=Date.now()+10000;while(!state.resultSets[0]?.export&&Date.now()<csvDeadline){await new Promise(r=>setTimeout(r,100));state=(await call('state')).data;}const exported=await fetch(`http://localhost:${port}/api/exports/${state.resultSets[0].export.id}.csv`);assert.equal(exported.status,200);assert.match(exported.headers.get('content-type')||'',/text\/csv/);const csv=await exported.text();assert.match(csv,/Ayesha/);assert.doesNotMatch(csv,/Bilal/);assert.ok((await call('state')).data.resultSets[0].export);
         assert.equal((await call('state')).data.drafts.length, 1);
         assert.equal(state.integrations.gmail, 'Not connected');
         assert.equal(state.gmail.connected,false);

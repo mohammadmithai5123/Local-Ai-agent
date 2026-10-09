@@ -2,4 +2,5 @@
 :root .check{width:auto;margin-right:8px;accent-color:#176549}
 @media(max-width:650px){nav{flex-wrap:wrap}nav button{flex:1 1 15%}.lead code{word-break:break-all}}
 :root .instructions{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;background:#f0f3ed;padding:14px;border-radius:8px}
+:root .progressCard,:root .resultCard{border:1px solid #dce3da;border-radius:10px;padding:16px;margin:14px 0;overflow-wrap:anywhere}.download{display:inline-block;background:#176549;color:white;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600}.resultCard td small{display:block}.resultCard table{min-width:690px}.chat .messages{max-height:520px}.activity>summary{font-weight:600}.progressCard p{margin-bottom:8px}@media(max-width:650px){.message.user{margin-left:12px}.resultCard{padding:12px}.resultCard .row>*{flex:1;text-align:center}.resultCard .tableWrap{border:1px solid #dce3da;border-radius:6px}}
 :root .attention{color:#842d19;background:#fff0e9;border-color:#dcad9d}blockquote{margin:12px 0;padding:12px;border-left:3px solid #176549;background:#f2f6f0}

@@ -1,3 +1,15 @@
+## Latest chat/tool verification ? October 10, 2026
+
+This section supersedes older snapshots below. Build passed and all 42 tests passed. Real production/development HTTP tests cover chat submission, request deduplication, import/draft persistence and selected CSV. Mock search tests cover source evidence/contact association, deduplication, unknown contacts, transport errors, quota pause/resume without re-search, cancellation discarding late results, CSV quoting/formula protection, backup v2/v1 restoration and conservative cleanup. Mock search is not live retrieval.
+
+Real Gemini HTTP verification in isolated synthetic databases passed greetings/questions/unsupported replies with zero automation tasks; one Roman Urdu hardware-lead selection and persisted personalized live draft; selected-set CSV excluding the other lead; duplicate request protection; restart persistence of messages, drafts and download. Model: gemini-3.5-flash-lite, demo off, sending false. An initial live run paused without a captured stage diagnosis; a diagnostic rerun passed. This does not establish browser interaction or an account billing tier.
+
+Public discovery reached classification and paused with zero fabricated rows because private search configuration was absent. Actual Tavily retrieval remains BLOCKED until the user privately configures the free plan/key/consent and a real source-backed run passes. ?I?ll configure it privately? is not completion evidence.
+
+Cleanup exported an ignored private backup first, removed 9 identifiable demo tasks, 22 demo drafts, 10 unused synthetic leads and 10 marked demo messages. Afterward 10 leads and 14 live drafts remain; an ambiguous untagged demo job was retained. Before/after private hashes verified all live drafts/tasks, Gmail ledger, campaigns and encrypted credential files unchanged. The existing one-attempt Gmail message ID remains private and preserved. User confirmed receipt; inbox versus spam placement unspecified. No new email was sent; sending remains disabled.
+
+Browser tooling again failed before initialization with Windows sandbox helper_unknown_error. No visual/keyboard pass or browser download. Source helper tests are not browser tests. Manual acceptance, one step at a time: (1) at 375/768/1440px open Chat and inspect wrapping/contained result scrolling; (2) Enter once, Shift+Enter newline, whitespace, held Enter/rapid click and IME composition; (3) keyboard Tab/Shift+Tab/Enter through controls/errors; (4) after search setup submit discovery, inspect source links/unknown contacts, create selected CSV, refresh and download again; (5) pause/resume a non-sending task and refresh. Record only actual user-confirmed outcomes.
+
 # Verification — milestone 3, October 8, 2026
 
 ## Actual chat flow fix — October 10, 2026

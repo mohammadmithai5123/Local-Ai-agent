@@ -1,7 +1,7 @@
 export class TransientFailure extends Error {
  constructor(public retryAt:number|null=null){super('Gemini 503 retry budget exhausted. Task paused; resume manually when service is available.');}
 }
-export type RequestControl={active?:()=>boolean;stage?:'health'|'planning'|'draft'};
+export type RequestControl={active?:()=>boolean;stage?:'health'|'planning'|'draft'|'discovery'|'analysis'};
 export function retryDelay(header:string|null,attempt:number,now=Date.now(),random=Math.random){
  if(header){const seconds=Number(header);const date=Date.parse(header);if(Number.isFinite(seconds)&&seconds>=0)return seconds*1000;if(Number.isFinite(date))return Math.max(0,date-now);}
  return Math.min(8000,1000*2**(attempt-1))*(0.5+random()*0.5);

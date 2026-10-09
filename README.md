@@ -1,3 +1,15 @@
+## Current chat workflow (supersedes older workflow steps below)
+
+Chat is the default screen. Live greetings/questions persist a conversational reply without creating an automation task. Imported-lead draft instructions queue draft generation automatically; ordinary Chat does not require Tasks ? Start. Setup sample verification and legacy review APIs retain their review gates. Chat never authorizes sending.
+
+Public discovery is a separate tool: privately configure TAVILY_API_KEY, SEARCH_FREE_TIER_CONFIRMED=true and SEARCH_DATA_CONSENT=true in .env after confirming the free Researcher plan at https://app.tavily.com (no card or paid overages). Restart after configuration. Queries go to Tavily and bounded retrieved excerpts to Gemini. Configuration alone is not verified retrieval. No search credentials were configured at the latest check; discovery pauses honestly instead of fabricating results. Gemini Search grounding is not used.
+
+Try ?UAE mein 10 hardware companies dhoondo?. Results appear inline with source links, retrieval times and unknown missing contacts. One Basic search per job retrieves at most 20 pages; requested results are capped at 20 and local search reservations at 100/month. Evidence filtering can return fewer results; it does not independently prove business/contact accuracy. Save known-email results to Leads explicitly if wanted. Discovery is not outreach consent.
+
+Use Create CSV on the desired result card, then Download CSV. ?Inki CSV banao? works when one result set is unambiguous; otherwise the bot asks which set. Downloads are persisted, immutable snapshots of that selected set, never the full lead database. Analysis uses at most the first 20 saved rows. Activity logs are collapsed by default. Errors, quota holds, Pause/Resume/Cancel and saved drafts remain visible after refresh.
+
+Search/account setup is pending; real Gemini greeting, selection, personalized draft and selected CSV workflows passed through the actual HTTP contract using isolated samples. Browser interaction remains unverified because installed tooling could not initialize. See VERIFICATION.md and INTEGRATIONS_AUDIT.md. WhatsApp, LinkedIn, mailbox filing and voice are not implemented.
+
 # Outreach Workbench
 
 A local personal web app for importing prospects, planning draft-only tasks in English or Roman Urdu, watching resumable progress, and reviewing explicitly authorized Gmail campaigns. The existing foundation and data are preserved; Gmail storage is additive. Node 22.17.1 and Git were already installed.

@@ -1,3 +1,11 @@
+## Current milestone status
+
+Implemented: Chat-first asynchronous conversational and tool routing; automatic non-sending imported-lead drafts; source-evidence public discovery adapter; inline results/progress; persisted selected-set CSV downloads; bounded saved-result analysis; backup v2 and conservative backed-up demo cleanup. Tests cover recovery, cancellation, quotas, selection and export protection.
+
+Verified live: Gemini conversation, unsupported-request explanation, Roman Urdu selection and one persisted personalized draft, selected CSV and restart persistence through actual HTTP in isolated databases. Pending: private Tavily setup and actual public retrieval; browser mobile/tablet/desktop and keyboard acceptance. Implemented does not mean live-connected.
+
+Deferred: WhatsApp, LinkedIn, voice, Gmail mailbox filing/new read or modify permissions, automated uncertain-send reconciliation, remote deployment security and cloud scheduling. Existing Gmail authentication/send ledger are preserved; sending stays disabled. Product is not finished.
+
 # Roadmap
 
 October 10 chat fix: the former lead-planner-only Chat now routes live conversation, explicit lead drafts and unsupported tool requests separately. Live greeting/question/unsupported explanation, Roman Urdu one-lead selection and personalized draft persistence passed through the actual dashboard HTTP contract in an isolated database. Restart persistence and duplicate requests passed. Chat mode/progress/error controls are implemented; browser UI execution remains unverified. User reported the layout looks fine without identifying viewport checks. Gmail sending remains disabled; WhatsApp, LinkedIn and voice remain pending.

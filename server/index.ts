@@ -12,11 +12,15 @@ import { Campaigns } from './campaigns.js';
 import { dirname,join } from 'node:path';
 import { GuidedSetup } from './setup.js';
 import { selectLeads } from './selection.js';
+import {ChatEngine} from './chat-engine.js';
+import {resultSnapshot,exportCsv,saveResultLeads} from './results.js';
+import {searchSummary} from './discovery.js';
 // Load local environment without printing values or exposing them to Vite.
 if (existsSync('.env'))
     process.loadEnvFile('.env');
 const db = openStore(process.env.DB_PATH || 'data/workbench.sqlite');
 const supervisor = new Supervisor(db);
+const chatEngine=new ChatEngine(db);supervisor.tools=()=>chatEngine.tick();
 const gmail = new Gmail(new TokenVault(join(dirname(process.env.DB_PATH||'data/workbench.sqlite'),'credentials')));
 const campaigns = new Campaigns(db,gmail);
 const setup=new GuidedSetup(db,gmail,supervisor);
@@ -29,7 +33,7 @@ const uploads = new Map<string, {
 const timer = setInterval(() => {void supervisor.tick().catch(() => console.error('Supervisor database operation failed'));if(process.env.GMAIL_ENABLE_SENDING==='true')void campaigns.tick().catch(()=>console.error('Gmail ledger operation failed; inspect persisted outcomes'));}, 700);
 const production = process.argv.includes('--production');
 const vite = production ? null : await (await import('vite')).createServer({ server: { middlewareMode: true, host: '127.0.0.1',fs:{deny:['**/.env','**/.env.*','**/.git/**','**/*.{crt,pem}','**/data/**','**/backups/**','**/credentials/**','**/uploads/**','**/sessions/**','**/.npm-cache/**','**/*.sqlite*','**/client_secret*.json','**/*token*.json']} }, appType: 'spa' });
-function state() { return { leads: db.prepare('SELECT * FROM leads ORDER BY name').all(), chat: db.prepare('SELECT * FROM chat ORDER BY created,rowid').all(), tasks: db.prepare('SELECT t.*,EXISTS(SELECT 1 FROM task_plans p WHERE p.task_id=t.id) planning,(SELECT count(*) FROM steps WHERE task_id=t.id) total,(SELECT count(*) FROM steps WHERE task_id=t.id AND state=\'done\') done FROM tasks t ORDER BY created DESC').all(), steps: db.prepare('SELECT * FROM steps').all(), drafts: db.prepare('SELECT * FROM drafts ORDER BY created DESC').all(), events: db.prepare('SELECT * FROM events ORDER BY id DESC LIMIT 30').all(), connection: connectionState(), aiRequests:requestMetadata, integrations: { gmail: gmail.summary().status, whatsapp: 'Not implemented', linkedin: 'Not implemented' }, gmail:{...gmail.summary(),sendingEnabled:process.env.GMAIL_ENABLE_SENDING==='true'},...campaigns.snapshot() }; }
+function state() { return { chatRequests:db.prepare('SELECT * FROM chat_requests ORDER BY created DESC,rowid DESC').all(), resultSets:resultSnapshot(db),search:searchSummary(), leads: db.prepare('SELECT * FROM leads ORDER BY name').all(), chat: db.prepare('SELECT * FROM chat ORDER BY created,rowid').all(), tasks: db.prepare('SELECT t.*,(SELECT not_before FROM task_retry_holds h WHERE h.task_id=t.id) retry_not_before,EXISTS(SELECT 1 FROM tool_jobs j WHERE j.task_id=t.id) tool,EXISTS(SELECT 1 FROM task_plans p WHERE p.task_id=t.id) planning,(SELECT count(*) FROM steps WHERE task_id=t.id) total,(SELECT count(*) FROM steps WHERE task_id=t.id AND state=\'done\') done FROM tasks t ORDER BY created DESC').all(), steps: db.prepare('SELECT * FROM steps').all(), drafts: db.prepare('SELECT * FROM drafts ORDER BY created DESC').all(), events: db.prepare('SELECT * FROM events ORDER BY id DESC LIMIT 30').all(), connection: connectionState(), aiRequests:requestMetadata, integrations: { gmail: gmail.summary().status, whatsapp: 'Not implemented', linkedin: 'Not implemented' }, gmail:{...gmail.summary(),sendingEnabled:process.env.GMAIL_ENABLE_SENDING==='true'},...campaigns.snapshot() }; }
 const server = createServer(async (req, res) => {
     res.setHeader('X-Frame-Options','DENY');
     const host = req.headers.host || '';
@@ -78,6 +82,8 @@ const server = createServer(async (req, res) => {
             send({...state(),setup:setup.summary(url.origin)});
             return;
         }
+        const download=url.pathname.match(/^\/api\/exports\/([\w-]+)\.csv$/);
+        if(req.method==='GET'&&download){const exported=exportCsv(db,download[1]);res.setHeader('Content-Type','text/csv; charset=utf-8');res.setHeader('Content-Disposition',`attachment; filename="${exported.filename}"`);res.end(exported.content);return;}
         if(req.method==='GET'&&url.pathname==='/api/setup'){send(setup.summary(url.origin));return;}
         if (req.method !== 'POST') {
             send({ error: 'Not found' }, 404);
@@ -162,32 +168,15 @@ const server = createServer(async (req, res) => {
         }
         if (url.pathname === '/api/chat') {
             const { text, requestId, mode } = z.object({ text: z.string().trim().min(1).max(4000), requestId: z.string().uuid(), mode: z.enum(['demo', 'live']) }).parse(body);
-            const prior = db.prepare('SELECT id FROM tasks WHERE request_id=?').get(requestId);
-            if (prior) {
-                send({ task: prior, duplicate: true });
-                return;
-            }
-            if (mode === 'live' && !liveEnabled())
-                throw Error('Live AI is not configured. Use demo or follow Settings.');
-            const id = randomUUID(), now = new Date().toISOString();
-            db.exec('BEGIN');
-            try {
-                db.prepare('INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?)').run(id, requestId, text, mode, 'needs_user', 'Planning your request', null, now);
-                db.prepare('INSERT INTO chat VALUES(?,?,?,?)').run(requestId, 'user', text, now);
-                db.prepare('INSERT INTO task_plans(task_id,scope) VALUES(?,NULL)').run(id);
-                db.exec('COMMIT');
-            }
-            catch (e) {
-                db.exec('ROLLBACK');
-                throw e;
-            }
-            void supervisor.planTask(id).catch(()=>console.error('Planning database operation failed; inspect task state.'));
-            send({ id });
-            return;
+            if (mode === 'live' && !liveEnabled())throw Error('Live AI is not configured. Use demo or follow Settings.');
+            send(chatEngine.submit(requestId,text,mode));return;
         }
+        const saveResults=url.pathname.match(/^\/api\/results\/([\w-]+)\/save-leads$/);if(saveResults){send(saveResultLeads(db,saveResults[1]));return;}
+        const requestAction=url.pathname.match(/^\/api\/chat-requests\/([\w-]+)\/(pause|resume|cancel)$/);if(requestAction){chatEngine.control(requestAction[1],requestAction[2]);send({ok:true});return;}
         const match = url.pathname.match(/^\/api\/tasks\/([\w-]+)\/(start|pause|resume|cancel)$/);
         if (match) {
             supervisor.control(match[1], match[2]);
+            if(['pause','cancel'].includes(match[2])){const job:any=db.prepare("SELECT args FROM tool_jobs WHERE task_id=? AND kind='discovery'").get(match[1]);if(job)db.prepare("UPDATE result_sets SET state='partial',reason=? WHERE id=?").run(match[2]==='cancel'?'Cancelled by you; retained source-backed rows only':'Paused by you; resume the existing task',JSON.parse(job.args).setId);}
             send({ ok: true });
             return;
         }
