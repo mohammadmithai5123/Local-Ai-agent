@@ -1,5 +1,9 @@
 # Verification — milestone 3, October 8, 2026
 
+## Public source backup authorization — October 10, 2026
+
+User explicitly requested proceeding with the supplied public repository, superseding the earlier private-only restriction. Before publishing, tracked files and all nine reachable commits/118 unique blobs passed the targeted private-file/credential-pattern scan. Exact local credential/contact-value inspection is also required before push. The remote had no branches; no force push is needed. Local data/backups and credentials remain excluded; Gmail sending remains disabled. Browser checks remain unverified.
+
 ## Current backup milestone — October 9, 2026
 
 User-confirmed receipt remains recorded below; placement in inbox versus spam was not specified. The existing Gmail message ID, sent outcome and attempts=1 were compared with the restored copy and preserved. No email was sent during this milestone. Running sending flag was false; private .env was found true and corrected to false to keep future restarts disabled.

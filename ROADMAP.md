@@ -1,5 +1,7 @@
 # Roadmap
 
+October 10: user explicitly authorized the selected public GitHub repository, overriding the prior private-only requirement. Source backup may proceed after inspection; local data and credentials remain private. Browser/manual verification, WhatsApp, LinkedIn and voice remain pending.
+
 ## Current backup/verification milestone — October 9, 2026
 
 User confirms receipt of the one authorized email; inbox versus spam placement is unspecified. Gmail authentication, one API acceptance and user-confirmed receipt are distinct verified results. Sending is disabled in both running state and private configuration. Historical pending-send notes below are superseded.

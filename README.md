@@ -97,6 +97,8 @@ Windows launch commands prefer IPv4 DNS results because this laptop's IPv6 route
 
 ## GitHub
 
+October 10: the user explicitly authorized using the supplied **public** repository, superseding the private-only preference. Public source/documentation may be read by anyone. Local leads, drafts, SQLite databases, backups, .env and OAuth credentials remain excluded. Check `git ls-remote origin refs/heads/main` against `git rev-parse HEAD` to verify the backup. Historical private-visibility blockers below are superseded by this authorization.
+
 October 9 backup check: existing Git Credential Manager authentication works and the supplied repository is accessible, but GitHub reports it **public**. Nothing has been pushed. Make the repository private in Settings → General → Danger Zone → Change repository visibility, then recheck privacy before connecting/pushing. GitHub backs up source/documentation only, not local leads, drafts, databases or credentials. Older setup notes below are historical.
 
 ## Private local data backup and restore
