@@ -1,5 +1,7 @@
 # Roadmap
 
+October 10 chat fix: the former lead-planner-only Chat now routes live conversation, explicit lead drafts and unsupported tool requests separately. Live greeting/question/unsupported explanation, Roman Urdu one-lead selection and personalized draft persistence passed through the actual dashboard HTTP contract in an isolated database. Restart persistence and duplicate requests passed. Chat mode/progress/error controls are implemented; browser UI execution remains unverified. User reported the layout looks fine without identifying viewport checks. Gmail sending remains disabled; WhatsApp, LinkedIn and voice remain pending.
+
 October 10: user explicitly authorized the selected public GitHub repository, overriding the prior private-only requirement. Source backup may proceed after inspection; local data and credentials remain private. Browser/manual verification, WhatsApp, LinkedIn and voice remain pending.
 
 ## Current backup/verification milestone — October 9, 2026

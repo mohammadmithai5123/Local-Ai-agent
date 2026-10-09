@@ -1,5 +1,7 @@
 # Handoff for another chat — milestone 3
 
+October 10 actual chat fix supersedes planner-only behavior: Chat now distinguishes live conversation, lead draft tasks and unsupported actions, exposes live/demo and durable progress/errors/results, and initializes consented configuration to Live. Actual dashboard API-contract live greeting/question/unsupported and Roman Urdu one-personalized-draft/restart checks passed in isolated SQLite; 37 tests/build passed. Browser tool kernel remains unavailable; user says layout fine without viewport details. Do not label these API checks browser verification. Sending remains false, Gmail auth and existing data preserved. Manual next step: refresh Chat in Live and submit Hello once.
+
 October 10: user explicitly authorized using the supplied PUBLIC GitHub repository, overriding the previous private-only blocker. Source/docs only; never publish local data, backups or credentials. Verify origin/main against HEAD after push. Sending remains disabled; no additional email authorized. UI manual verification is still pending.
 
 Authenticated non-force source push succeeded; origin/main matched e3363cb before this evidence update. Origin is configured to the user-supplied repository. Keep public visibility intentional and runtime artifacts ignored. Final evidence commit is pushed and hash-checked separately.

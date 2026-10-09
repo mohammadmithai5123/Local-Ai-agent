@@ -95,6 +95,12 @@ Windows launch commands prefer IPv4 DNS results because this laptop's IPv6 route
 - `.env` changes require restart. `npm.cmd start` requires a successful build.
 - Browser verification was unavailable in this tool environment; see VERIFICATION.md for checks and limitations.
 
+## Chat behavior
+
+Configured, consented AI now opens in visibly labeled Live mode; you can explicitly choose Demo in Chat or Settings. Live greetings and ordinary questions receive Gemini conversation replies. Recent context is bounded to eight messages (600 characters each), without sending the imported lead database to the planner. Explicit lead-selection/draft instructions create reviewed tasks; click Start drafts in Chat to generate one personalized draft per lead. Unsupported web search, sending and account actions receive an explanation. Chat never sends mail. Demo remains limited and explains that it cannot provide live conversation.
+
+Chat shows durable task progress, pauses/errors, resume/cancel and saved drafts. The frontend submits an idempotent request, then polls persisted state every 1.5 seconds without overlapping polls. Read requests time out at 10 seconds; mutations at 105 seconds. Provider generation retains the 90-second serialized retry budget. Planning quota pauses require manual resume after the displayed time. Replies/tasks survive refresh; working mode is initialized from private consented configuration, not browser storage. For a real API-only check using isolated samples, run `node --dns-result-order=ipv4first scripts/verify-chat.mjs --live` after building. This does not verify browser rendering.
+
 ## GitHub
 
 October 10: the user explicitly authorized using the supplied **public** repository, superseding the private-only preference. Public source/documentation may be read by anyone. Local leads, drafts, SQLite databases, backups, .env and OAuth credentials remain excluded. Check `git ls-remote origin refs/heads/main` against `git rev-parse HEAD` to verify the backup. Historical private-visibility blockers below are superseded by this authorization.

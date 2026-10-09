@@ -14,12 +14,21 @@ export class Supervisor {
     async planTask(id:string){
         const task:any=this.db.prepare('SELECT * FROM tasks WHERE id=?').get(id);const marker:any=this.db.prepare('SELECT scope FROM task_plans WHERE task_id=?').get(id);if(!task||!marker)return;
         const active=()=>['needs_user','running'].includes(String(this.db.prepare('SELECT state FROM tasks WHERE id=?').get(id)?.state));
-        try{const p=await this.makePlan(task.instruction,task.mode,{active,stage:'planning'});if(!active())return;
+        const history=(this.db.prepare('SELECT role,text FROM chat ORDER BY created DESC,rowid DESC LIMIT 8').all() as {role:string;text:string}[]).reverse().filter(m=>m.text!==task.instruction).map(m=>({...m,text:m.text.slice(0,600)}));
+        try{const p=await this.makePlan(task.instruction,task.mode,{active,stage:'planning'},history);if(!active())return;
+            if(p.kind==='conversation'||p.kind==='unsupported'){
+                this.db.exec('BEGIN');try{
+                    this.db.prepare("UPDATE tasks SET state='completed',reason=?,next_retry=NULL WHERE id=?").run(p.kind==='conversation'?'Conversation reply saved; no action performed.':'Unsupported request explained; no action performed.',id);
+                    this.db.prepare('DELETE FROM task_plans WHERE task_id=?').run(id);
+                    this.db.prepare('INSERT INTO chat VALUES(?,?,?,?)').run(randomUUID(),'assistant',`${task.mode==='demo'?'[DEMO] ':''}${p.reply}`,new Date().toISOString());
+                    event(this.db,id,'Chat reply saved; no lead action or send performed.');this.db.exec('COMMIT');
+                }catch(e){this.db.exec('ROLLBACK');throw e;}return;
+            }
             const scope=marker.scope?new Set(JSON.parse(marker.scope)):null;const leads=selectLeads(this.db.prepare('SELECT * FROM leads ORDER BY name').all().filter((l:any)=>!scope||scope.has(l.id)),p);
             this.db.exec('BEGIN');try{for(const l of leads)this.db.prepare("INSERT OR IGNORE INTO steps(task_id,lead_id,state) VALUES(?,?,'pending')").run(id,l.id);
             this.db.prepare("UPDATE tasks SET state='paused',reason=?,next_retry=NULL WHERE id=?").run(leads.length?'Planning succeeded. Review selected recipients, then Start drafts.':'No matching leads; create a new request.',id);this.db.prepare('DELETE FROM task_plans WHERE task_id=?').run(id);
-            this.db.prepare('INSERT INTO chat VALUES(?,?,?,?)').run(randomUUID(),'assistant',`${task.mode==='demo'?'[DEMO] ':''}${p.reply}\n${leads.length} lead(s) selected.`,new Date().toISOString());event(this.db,id,'Planning succeeded; awaiting draft review.');this.db.exec('COMMIT');}catch(e){this.db.exec('ROLLBACK');throw e;}
-        }catch(e){if(!active())return;const transient=e instanceof TransientFailure;if(transient&&e.retryAt)this.db.prepare('INSERT OR REPLACE INTO task_retry_holds VALUES(?,?)').run(id,e.retryAt);this.db.prepare('UPDATE tasks SET state=?,reason=?,next_retry=NULL WHERE id=?').run(transient?'paused':'failed',`Planning: ${e instanceof Error?e.message:'failed'}`,id);event(this.db,id,transient?'Planning retry budget exhausted; manual resume required.':'Planning failed.');}
+            this.db.prepare('INSERT INTO chat VALUES(?,?,?,?)').run(randomUUID(),'assistant',`${task.mode==='demo'?'[DEMO] ':''}${leads.length} imported lead(s) selected. ${leads.length?'Review the task and Start drafts to generate personalized drafts.':'No matching leads were found.'} No messages sent.`,new Date().toISOString());event(this.db,id,'Planning succeeded; awaiting draft review.');this.db.exec('COMMIT');}catch(e){this.db.exec('ROLLBACK');throw e;}
+        }catch(e){if(!active())return;const transient=e instanceof TransientFailure,quota=e instanceof RateLimit;if((transient||quota)&&e.retryAt)this.db.prepare('INSERT OR REPLACE INTO task_retry_holds VALUES(?,?)').run(id,e.retryAt);this.db.prepare('UPDATE tasks SET state=?,reason=?,next_retry=NULL WHERE id=?').run(transient||quota?'paused':'failed',`Planning: ${e instanceof Error?e.message:'failed'}${quota?' Resume manually after '+new Date(e.retryAt).toISOString():''}`,id);event(this.db,id,transient?'Planning retry budget exhausted; manual resume required.':'Planning failed.');}
     }
     control(id: string, action: string) {
         const task: any = this.db.prepare('SELECT * FROM tasks WHERE id=?').get(id);

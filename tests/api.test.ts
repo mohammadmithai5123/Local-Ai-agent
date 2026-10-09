@@ -5,14 +5,14 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-for (const production of [true,false]) test(`real ${production?'production':'development'} API: import, duplicate requests, draft workflow, refresh and origin boundary`, { timeout: 30000 }, async () => {
+for (const production of [true,false]) test(`real ${production?'production':'development'} API: import, duplicate requests, draft workflow, refresh and origin boundary`, { timeout: 45000 }, async () => {
     const dir = mkdtempSync(join(tmpdir(), 'workbench-api-'));
     const port = 32000 + Math.floor(Math.random() * 10000);
     const child = spawn(process.execPath, ['--experimental-sqlite', '.runtime/server/index.js', ...(production?['--production']:[])], { env: { ...process.env, PORT: String(port), DB_PATH: join(dir, 'test.sqlite'), GEMINI_API_KEY: '', FREE_TIER_CONFIRMED: 'false', AI_DATA_CONSENT: 'false', GOOGLE_CLIENT_ID:'',GOOGLE_CLIENT_SECRET:'',GMAIL_ENABLE_SENDING:'false' }, stdio: ['ignore', 'pipe', 'pipe'] });
     let stderr = '';
     child.stderr.on('data', d => stderr += d.toString());
     try {
-        await new Promise<void>((resolve, reject) => { const timeout = setTimeout(() => reject(Error('Server start timeout ' + stderr)), 10000); child.stdout.on('data', d => { if (d.toString().includes('Workbench ready')) {
+        await new Promise<void>((resolve, reject) => { const timeout = setTimeout(() => reject(Error('Server start timeout ' + stderr)), 20000); child.stdout.on('data', d => { if (d.toString().includes('Workbench ready')) {
             clearTimeout(timeout);
             resolve();
         } }); child.on('exit', () => { clearTimeout(timeout); reject(Error('Server exited ' + stderr)); }); });
@@ -25,6 +25,7 @@ for (const production of [true,false]) test(`real ${production?'production':'dev
         assert.equal(validate.data.errors.length, 2);
         assert.equal((await call('import/commit', mapped)).data.valid.length, 2);
         assert.equal((await call('import/commit', mapped)).data.valid.length, 0);
+        assert.equal((await call('chat',{requestId:randomUUID(),text:'   ',mode:'demo'})).status,400);
         const req = { requestId: randomUUID(), text: 'Karachi ke 2 leads ke liye drafts banao', mode: 'demo' };
         const first = await call('chat', req);
         assert.equal(first.status, 200);

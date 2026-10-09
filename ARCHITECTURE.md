@@ -1,5 +1,11 @@
 # Architecture
 
+## Actual dashboard chat routing
+
+The Chat composer posts `{text,requestId,mode}` to `/api/chat`. The route atomically stores the user message, task and planning marker, returns immediately, and invokes the supervisor. Gemini structured intent now distinguishes conversation, draft workflow and unsupported action requests. Conversations/explanations atomically persist an assistant reply and completed task without lead steps; draft plans retain recipient selection and explicit Start drafts review. App-generated workflow results replace model-authored action claims. No new sending or browsing tools exist. Planning includes bounded recent chat context only; draft generation still receives one selected lead. The provider/model/free-tier gates and retry layer are unchanged.
+
+Chat polls durable state and renders replies, task reasons, controls and saved drafts together. A configured/consented session initializes to Live with an explicit mode selector. Frontend request deadlines prevent an indefinite busy state; polling is serialized. Composer Enter/newline/IME/repeat decisions are shared with unit tests; visual/input-event integration still needs manual browser verification. Planning 429 pauses retain their marker and persist a manual not-before gate. Restart recovery and backup schemas are unchanged.
+
 Outgoing language preference: `OUTREACH_LANGUAGE=english` overrides subject/body language for new demo/live drafts, while Roman Urdu chat instructions still plan lead selection. A single-test revision endpoint accepts the current digest and new subject/body only, requires a never-authorized draft campaign with exactly one unattempted draft action, atomically updates fingerprint/digest and never queues mail. Recipients and attempted/authorized snapshots cannot be revised. Old digest authorization is rejected. This supports correcting preview language before consent without creating a second test campaign.
 
 Gmail account verification (October 9, 2026): actual Web OAuth callback and refresh-token exchange passed. Persisted setup evidence distinguishes successful callback registration/exchange from authentication refresh. Verified refers to authentication only; sending remains disabled and live send acceptance/delivery unverified. No permission expansion or implementation change was needed.
