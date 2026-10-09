@@ -2,6 +2,8 @@
 
 ## Authorized single-email result — October 9, 2026
 
+Recipient confirmation: the user reported that the test email was received. Delivery is therefore user-confirmed, separate from the Gmail API acceptance recorded below; the app did not inspect the mailbox, and inbox-versus-spam placement was not specified. Sending remains disabled. No additional message or retry was authorized or performed.
+
 After the exact English preview was shown, the user explicitly instructed sending. Verified the immutable sender/recipient/subject/body, one action, zero attempts and no other active campaigns, then authorized that campaign only with maximum one send and a 15-minute expiry. Gmail accepted one API request, returned a message ID, and the durable action records sent with attempts=1 and no error. The private message ID and recipient/content remain in ignored SQLite and the local dashboard, not committed documentation. Inbox/spam delivery is still unverified pending the recipient's confirmation.
 
 Sending was enabled only for the test process; persisted .env was already false, and the app was restarted with sending false immediately afterward. Reopen confirmed the sent action/message ID and zero queued/sending test actions. Campaign state is completed; its single sent action remains closed and is not resendable. No retries occurred. No code changes were needed; checks were exact-preview matching, actual API outcome and durable disabled-state verification. User was asked to check inbox and spam.
