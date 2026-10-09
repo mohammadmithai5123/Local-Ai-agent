@@ -1,5 +1,11 @@
 # Roadmap
 
+## Current backup/verification milestone — October 9, 2026
+
+User confirms receipt of the one authorized email; inbox versus spam placement is unspecified. Gmail authentication, one API acceptance and user-confirmed receipt are distinct verified results. Sending is disabled in both running state and private configuration. Historical pending-send notes below are superseded.
+
+Private local data export and non-overwriting restore are implemented and verified against an isolated restored copy, preserving sent IDs and one-attempt history while removing authorization. GitHub authentication works, but the supplied repository is public: push is blocked until private visibility is verified. Browser automation failed at sandbox initialization; responsive/keyboard/IME checks remain unverified pending one-at-a-time manual confirmation. WhatsApp, LinkedIn, voice, hosting and automatic mailbox reconciliation remain pending; the product is not finished.
+
 English outgoing-draft preference and safe revision of an unused, unauthorized single-test preview are implemented. No send is inferred from editing or requesting the sending switch. Exact revised content still requires explicit authorization.
 
 October 9, 2026: actual Gmail Web OAuth consent/callback and refresh authentication verified, using only gmail.send. No email sent; sending stays disabled. Local single-test preview is ready for a later user-supplied recipient and separate authorization. Send acceptance/delivery and live revocation remain unverified.

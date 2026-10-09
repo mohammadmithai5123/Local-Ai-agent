@@ -59,6 +59,7 @@ for (const production of [true,false]) test(`real ${production?'production':'dev
         assert.equal((await call(`campaigns/${review.id}/authorize`,{digest:review.digest,limit:1,expires:Date.now()+3600000,confirm:true})).status,400);
         assert.equal((await call('state')).data.mailActions[0].state,'draft');
         assert.equal((await fetch(`http://localhost:${port}/data/credentials/gmail.enc`)).status,403);
+        assert.equal((await fetch(`http://localhost:${port}/backups/private.json`)).status,403);
         assert.equal((await fetch(`http://localhost:${port}/.env`)).status,403);
         assert.equal((await fetch(`http://localhost:${port}/%ZZ`)).status,400);
         assert.equal((await call('chat', { ...req, requestId: randomUUID(), mode: 'live' })).status, 400);

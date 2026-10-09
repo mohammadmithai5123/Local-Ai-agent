@@ -7,7 +7,9 @@
     "dev": "node scripts/run.mjs dev",
     "build": "tsc --noEmit && tsc -p tsconfig.runtime.json && vite build",
     "start": "node --dns-result-order=ipv4first --experimental-sqlite .runtime/server/index.js --production",
-    "test": "node scripts/run.mjs test"
+    "test": "node scripts/run.mjs test",
+    "backup:data": "node --experimental-sqlite scripts/data-backup.mjs export",
+    "restore:data": "node --experimental-sqlite scripts/data-backup.mjs restore"
   },
   "dependencies": {
     "csv-parse": "^7.0.3",

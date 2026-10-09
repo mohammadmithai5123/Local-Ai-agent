@@ -97,6 +97,18 @@ Windows launch commands prefer IPv4 DNS results because this laptop's IPv6 route
 
 ## GitHub
 
+October 9 backup check: existing Git Credential Manager authentication works and the supplied repository is accessible, but GitHub reports it **public**. Nothing has been pushed. Make the repository private in Settings → General → Danger Zone → Change repository visibility, then recheck privacy before connecting/pushing. GitHub backs up source/documentation only, not local leads, drafts, databases or credentials. Older setup notes below are historical.
+
+## Private local data backup and restore
+
+From the project folder, run `npm.cmd run build` once after source updates, then `npm.cmd run backup:data`. It creates a timestamped JSON export under ignored `backups/`, using a consistent read-only SQLite transaction. Leads, drafts, chat, tasks/steps, planning records, events and campaign/send history are included. OAuth tokens, encryption keys, .env and configuration-check fingerprints are excluded; campaign authorization is cleared. Exports contain private contact/message data in plaintext: keep them on protected storage and copy them to your own secure backup disk if desired. Do not upload them to GitHub.
+
+Restore with `npm.cmd run restore:data -- backups/YOUR_BACKUP.json`. It creates a **new** `data/restored-TIMESTAMP.sqlite`; it never replaces the working database. Only restore trusted exports from this app. Invalid imports roll back; a failed restore can leave an empty candidate file. Existing destination paths are rejected. For a custom database, set `$env:DB_PATH` to its path before exporting; the command defaults to `data/workbench.sqlite` and does not read .env.
+
+To activate a reviewed restore: stop the app, keep the original database and its WAL/SHM files together, privately set DB_PATH in .env to the new database, keep GMAIL_ENABLE_SENDING=false, and restart only one app process. Unfinished tasks are paused; queued never-attempted mail returns to draft; in-flight/attempted queued mail becomes uncertain for manual reconciliation. Sent IDs, attempt counts and duplicate-prevention records remain intact. Authorizations and automatic retry times are cleared, and account checks must be rerun. Tokens are not restored; reconnect Gmail if credentials are missing. A restore never authorizes sending. To revert, stop the app and point DB_PATH back to the untouched original.
+
+## Historical GitHub setup notes
+
 The Setup screen inspects installed tooling, tracked files and reachable history with `node scripts/verify-history.mjs`. GitHub CLI is unavailable here; installed Git Credential Manager is not proof of authentication. No origin exists. Supply an existing private repository URL or create one with **Private** selected at https://github.com/new. Without GitHub CLI, the app honestly leaves repository privacy unverified; inspect its visibility in GitHub yourself. Do not put credentials in its URL. The check never pushes; verify a later push using `git ls-remote origin refs/heads/main` against `git rev-parse HEAD`.
 
 Source and documentation only belong in Git. Git Credential Manager is installed, but account authentication was not exercised. No repository was published and no remote was supplied. After creating a **private** GitHub repository yourself, review files and connect:

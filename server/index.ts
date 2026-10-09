@@ -28,7 +28,7 @@ const uploads = new Map<string, {
 }>();
 const timer = setInterval(() => {void supervisor.tick().catch(() => console.error('Supervisor database operation failed'));if(process.env.GMAIL_ENABLE_SENDING==='true')void campaigns.tick().catch(()=>console.error('Gmail ledger operation failed; inspect persisted outcomes'));}, 700);
 const production = process.argv.includes('--production');
-const vite = production ? null : await (await import('vite')).createServer({ server: { middlewareMode: true, host: '127.0.0.1',fs:{deny:['**/.env','**/.env.*','**/.git/**','**/*.{crt,pem}','**/data/**','**/credentials/**','**/uploads/**','**/sessions/**','**/.npm-cache/**','**/*.sqlite*','**/client_secret*.json','**/*token*.json']} }, appType: 'spa' });
+const vite = production ? null : await (await import('vite')).createServer({ server: { middlewareMode: true, host: '127.0.0.1',fs:{deny:['**/.env','**/.env.*','**/.git/**','**/*.{crt,pem}','**/data/**','**/backups/**','**/credentials/**','**/uploads/**','**/sessions/**','**/.npm-cache/**','**/*.sqlite*','**/client_secret*.json','**/*token*.json']} }, appType: 'spa' });
 function state() { return { leads: db.prepare('SELECT * FROM leads ORDER BY name').all(), chat: db.prepare('SELECT * FROM chat ORDER BY created,rowid').all(), tasks: db.prepare('SELECT t.*,EXISTS(SELECT 1 FROM task_plans p WHERE p.task_id=t.id) planning,(SELECT count(*) FROM steps WHERE task_id=t.id) total,(SELECT count(*) FROM steps WHERE task_id=t.id AND state=\'done\') done FROM tasks t ORDER BY created DESC').all(), steps: db.prepare('SELECT * FROM steps').all(), drafts: db.prepare('SELECT * FROM drafts ORDER BY created DESC').all(), events: db.prepare('SELECT * FROM events ORDER BY id DESC LIMIT 30').all(), connection: connectionState(), aiRequests:requestMetadata, integrations: { gmail: gmail.summary().status, whatsapp: 'Not implemented', linkedin: 'Not implemented' }, gmail:{...gmail.summary(),sendingEnabled:process.env.GMAIL_ENABLE_SENDING==='true'},...campaigns.snapshot() }; }
 const server = createServer(async (req, res) => {
     res.setHeader('X-Frame-Options','DENY');
@@ -40,7 +40,7 @@ const server = createServer(async (req, res) => {
     }
     const url = new URL(req.url || '/', `http://${host}`);
     let decodedPath:string;try{decodedPath=decodeURIComponent(url.pathname);}catch{res.writeHead(400);res.end('Invalid URL');return;}
-    if(/(?:^|[\/\\])(?:data|credentials|uploads|sessions|\.env[^\/\\]*|\.git|\.npm-cache)(?:[\/\\]|$)/i.test(decodedPath)||/client_secret[^\/\\]*\.json|token[^\/\\]*\.json|\.sqlite/i.test(decodedPath)){res.writeHead(403);res.end('Private local files are not served');return;}
+    if(/(?:^|[\/\\])(?:data|backups|credentials|uploads|sessions|\.env[^\/\\]*|\.git|\.npm-cache)(?:[\/\\]|$)/i.test(decodedPath)||/client_secret[^\/\\]*\.json|token[^\/\\]*\.json|\.sqlite/i.test(decodedPath)){res.writeHead(403);res.end('Private local files are not served');return;}
     if (!url.pathname.startsWith('/api/')) {
         if (vite) {
             vite.middlewares(req, res);

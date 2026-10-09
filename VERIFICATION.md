@@ -1,10 +1,24 @@
 # Verification — milestone 3, October 8, 2026
 
+## Current backup milestone — October 9, 2026
+
+User-confirmed receipt remains recorded below; placement in inbox versus spam was not specified. The existing Gmail message ID, sent outcome and attempts=1 were compared with the restored copy and preserved. No email was sent during this milestone. Running sending flag was false; private .env was found true and corrected to false to keep future restarts disabled.
+
+Git Credential Manager authenticated access succeeded. GitHub repository metadata returned HTTP 200 with push permission, but private=false. No push or remote branch match is claimed; waiting for the user to make the selected repository private. Tracked files and all eight reachable commits/104 unique blobs passed the targeted private-path/credential-pattern inspection before this milestone commit. This scan is not a guarantee against every secret format.
+
+Computer-use skill and required documentation were read; the available Node computer-use kernel exited before browser access with `windows sandbox failed: helper_unknown_error: setup refresh had errors`. No browser binary or dependency was downloaded. Mobile/tablet/desktop, Enter/Shift+Enter, IME, repeated submission, keyboard navigation, refresh recovery and readable-error checks remain unverified. The first manual mobile layout check has been requested; no user result is assumed.
+
+Actual `backup:data` export succeeded into ignored backups/. Actual restore succeeded into a separate new ignored SQLite database. Lead/draft/task/mail-action counts matched; the sent message ID, sent state and attempts=1 matched without exposing values; restored authorization count was zero. Original records/configuration and Gmail token files were not exported or replaced. Isolated regression checks cover overwrite refusal, malformed columns, authorization removal, task pause, uncertainty and send-ledger preservation. Development/production HTTP tests reject backup file paths.
+
+Build passed and all 32 tests passed on rerun. The first run had two API startup timeouts and a new fixture placeholder-count error; the fixture was corrected, and unchanged API startup checks passed on rerun. No startup timeout was hidden or reclassified as a pass.
+
+Final source build and all 32 tests passed again. Exact local credential/contact-value comparisons against reachable history and staged files found zero matches, without displaying private values. The updated production app was restarted with sending false; backup HTTP access returned 403, the one sent action retained its message ID and attempts=1, and no campaign was authorized/running.
+
 ## Authorized single-email result — October 9, 2026
 
 Recipient confirmation: the user reported that the test email was received. Delivery is therefore user-confirmed, separate from the Gmail API acceptance recorded below; the app did not inspect the mailbox, and inbox-versus-spam placement was not specified. Sending remains disabled. No additional message or retry was authorized or performed.
 
-After the exact English preview was shown, the user explicitly instructed sending. Verified the immutable sender/recipient/subject/body, one action, zero attempts and no other active campaigns, then authorized that campaign only with maximum one send and a 15-minute expiry. Gmail accepted one API request, returned a message ID, and the durable action records sent with attempts=1 and no error. The private message ID and recipient/content remain in ignored SQLite and the local dashboard, not committed documentation. Inbox/spam delivery is still unverified pending the recipient's confirmation.
+After the exact English preview was shown, the user explicitly instructed sending. Verified the immutable sender/recipient/subject/body, one action, zero attempts and no other active campaigns, then authorized that campaign only with maximum one send and a 15-minute expiry. Gmail accepted one API request, returned a message ID, and the durable action records sent with attempts=1 and no error. The private message ID and recipient/content remain in ignored SQLite and the local dashboard, not committed documentation. The API response alone did not establish delivery; the user subsequently confirmed receipt as recorded above. Inbox versus spam placement remains unspecified.
 
 Sending was enabled only for the test process; persisted .env was already false, and the app was restarted with sending false immediately afterward. Reopen confirmed the sent action/message ID and zero queued/sending test actions. Campaign state is completed; its single sent action remains closed and is not resendable. No retries occurred. No code changes were needed; checks were exact-preview matching, actual API outcome and durable disabled-state verification. User was asked to check inbox and spam.
 
