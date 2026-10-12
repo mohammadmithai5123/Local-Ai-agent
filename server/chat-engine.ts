@@ -80,7 +80,7 @@ export class ChatEngine {
    this.db.exec('BEGIN');try{addRows(this.db,args.setId,rows,Math.min(20,args.limit));this.db.prepare('UPDATE tool_jobs SET cursor=cursor+1 WHERE task_id=?').run(id);this.db.exec('COMMIT');}catch(e){this.db.exec('ROLLBACK');throw e;}
   }catch(e){if(!active())return;const retryAt=e instanceof RateLimit?e.retryAt:e instanceof SearchFailure||e instanceof TransientFailure?e.retryAt:null;
    if(retryAt)this.db.prepare('INSERT OR REPLACE INTO task_retry_holds VALUES(?,?)').run(id,retryAt);
-   const reason=e instanceof SearchFailure?e.message:e instanceof RateLimit?'AI extraction quota reached. Resume manually after the provider retry time.':e instanceof TransientFailure?e.message:'Tool failed or timed out. Completed source checkpoints remain saved; resume manually.';
+   const reason=e instanceof SearchFailure?e.message:e instanceof RateLimit?'AI extraction quota reached. Resume manually after the provider retry time.':e instanceof TransientFailure?e.message:e instanceof z.ZodError?'AI extraction returned invalid structured fields. Completed source checkpoints remain saved; resume manually.':'Tool failed or timed out. Completed source checkpoints remain saved; resume manually.';
    this.db.prepare("UPDATE tasks SET state='paused',reason=?,next_retry=NULL WHERE id=?").run(reason,id);
    if(job.kind==='discovery')this.db.prepare("UPDATE result_sets SET state='partial',reason=? WHERE id=?").run(reason,args.setId);event(this.db,id,reason);
   }

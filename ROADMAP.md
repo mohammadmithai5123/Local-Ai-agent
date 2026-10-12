@@ -1,3 +1,7 @@
+## October 12 verification update
+
+Completed private Tavily setup and actual Basic retrieval; verified one source-backed result, exact selected-set CSV and backend/app-restart persistence. Remaining: Gemini quota recovery and manual resume to process remaining sources (ten results not guaranteed), browser rendering/download acceptance. Existing CSV is a one-row immutable snapshot. WhatsApp, LinkedIn, voice and mailbox filing remain pending; sending disabled.
+
 ## Current milestone status
 
 Implemented: Chat-first asynchronous conversational and tool routing; automatic non-sending imported-lead drafts; source-evidence public discovery adapter; inline results/progress; persisted selected-set CSV downloads; bounded saved-result analysis; backup v2 and conservative backed-up demo cleanup. Tests cover recovery, cancellation, quotas, selection and export protection.

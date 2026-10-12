@@ -20,6 +20,7 @@ test('source validation requires exact company/location/category evidence, blank
  const rows=validateCompanies(page,query,{companies:[candidate,{...candidate,name:'Invented',nameEvidence:'Not present'}, {...candidate,nameEvidence:'Sample Hardware',email:'invented@example.com',phone:'123456789'}]});
  assert.equal(rows.length,2);assert.equal(rows[1].email,'');assert.equal(rows[1].phone,'');
  assert.equal(validateCompanies(page,{...query,country:'Pakistan'},{companies:[candidate]}).length,0);
+ for(const field of ['locationEvidence','nameEvidence','categoryEvidence'])assert.equal(validateCompanies(page,query,{companies:[candidate,{...candidate,[field]:'   '}]}).length,1,'Incomplete evidence rejects only that candidate, never valid siblings or the whole source');
  const db=openStore(':memory:');try{db.prepare('INSERT INTO result_sets VALUES(?,?,?,?,?,?,?,?)').run('set','request','UAE hardware','public-tavily',10,'partial','Only source evidence retained','2026-10-10');assert.equal(addRows(db,'set',rows,10),1);
   const exported:any=prepareExport(db,'set'),csv=exportCsv(db,String(exported.id));assert.match(csv.content,/Sample Hardware/);assert.match(csv.content,/info@hardware.example.com/);
   const old=csv.content;addRows(db,'set',[{...rows[0],name:'Another'}],10);assert.equal(exportCsv(db,String(exported.id)).content,old,'CSV snapshot cannot grow after resume');

@@ -1,3 +1,7 @@
+## Latest public-search status (October 12)
+
+Private search setup is complete. Actual Tavily retrieval passed (20 pages), with one persisted source-backed company; Gemini extraction quota paused the remaining sources. The requested ten-company workflow is incomplete. Exact Roman Urdu CSV follow-up exported precisely the one saved result; API and app-restart persistence passed. The CSV is an immutable snapshot and will not grow if discovery resumes. Browser display/download interaction remains unverified; see the latest VERIFICATION.md. Gmail sending stays disabled.
+
 ## Current chat workflow (supersedes older workflow steps below)
 
 Chat is the default screen. Live greetings/questions persist a conversational reply without creating an automation task. Imported-lead draft instructions queue draft generation automatically; ordinary Chat does not require Tasks ? Start. Setup sample verification and legacy review APIs retain their review gates. Chat never authorizes sending.

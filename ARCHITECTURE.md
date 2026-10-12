@@ -1,3 +1,7 @@
+## Public-search validation clarification
+
+Blank name/location/category evidence is treated as a candidate-level exclusion, never an accepted company and never a reason to discard valid siblings. Wrong types, oversized fields and other schema failures still pause with an explicit invalid-structured-fields reason. Required exact source evidence and associated contact validation remain unchanged. Actual Tavily search succeeded; extraction quota can independently pause a job while its sources, cursor, partial results and CSV snapshot remain durable.
+
 ## Current chat/tool milestone (supersedes historical behavior below)
 
 POST /api/chat atomically persists a unique chat_requests receipt and user text, then returns promptly. The existing single-lock Supervisor cooperatively dispatches ChatEngine classification and durable tool_jobs before draft steps. Conversation/unsupported replies complete the receipt without a task. Lead draft plans create queued, non-sending tasks automatically. Tool jobs cover public discovery, selected CSV export and bounded saved-result analysis; no general-purpose command executor exists.
