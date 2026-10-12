@@ -1,3 +1,11 @@
+## Current interface — October 12, 2026
+
+Chat opens by default with compact desktop navigation, a mobile navigation drawer and an optional Details panel. The restrained neutral/teal interface keeps the composer in the workspace flow. Enter sends once; Shift+Enter adds a newline; composition guards remain. New updates follow the conversation only while you are near the bottom; otherwise use Jump to latest. Replies, task progress, results and snapshots still come from persisted backend state.
+
+Discovery cards distinguish working, paused, partial, completed and failed outcomes. Five of ten companies remains Partial when sources are exhausted, separate from a quota pause. Unknown contacts stay Unknown; sources remain linked. Historical downloads have explicit counts: Download CSV — 1 company and Download CSV — 5 companies. Leads supports search, country filtering and Export visible leads (a local CSV of the six displayed contact fields, excluding notes). This does not replace discovery snapshots or the full private backup. Tasks has compact filters; activity logs and advanced connection options are collapsed. Email reviews shows the actual sending flag; sending remains disabled.
+
+Installed Chrome rendered 375/768/1440 px and passed 36 browser checks using an isolated, empty preview plus in-memory API fixtures. These are browser UI checks, not a new live AI/search/Gmail end-to-end run. Build and 50 tests passed. Native OS IME and physical mobile keyboard behavior still need manual acceptance. Screenshots and evidence stay in ignored test-results; see VERIFICATION.md. No framework, dependency, provider or backend workflow changed. Latest sections supersede historical verification snapshots below.
+
 ## Latest resume and CSV behavior
 
 The original UAE hardware discovery now has 5 source-backed companies from all 20 cached pages. Remaining three sources used one Gemini call and no additional Tavily search. Ten matching companies were not established; the partial card explains the evidence limit. Original one-company CSV is preserved, and a new five-company CSV is available with its count. Refresh/restart preserve versions and results. Unknown contacts remain unknown; source evidence is not independent verification or outreach consent. Gmail sending remains disabled.
@@ -6,19 +14,19 @@ Paused discovery cards include Resume discovery directly, even if an older task 
 
 ## Latest public-search status (October 12)
 
-Private search setup is complete. Actual Tavily retrieval passed (20 pages), with one persisted source-backed company; Gemini extraction quota paused the remaining sources. The requested ten-company workflow is incomplete. Exact Roman Urdu CSV follow-up exported precisely the one saved result; API and app-restart persistence passed. The CSV is an immutable snapshot and will not grow if discovery resumes. Browser display/download interaction remains unverified; see the latest VERIFICATION.md. Gmail sending stays disabled.
+Private search setup is complete. Actual Tavily retrieval passed (20 pages), with one persisted source-backed company; Gemini extraction quota paused the remaining sources. The requested ten-company workflow is incomplete. Exact Roman Urdu CSV follow-up exported precisely the one saved result; API and app-restart persistence passed. The CSV is an immutable snapshot and will not grow if discovery resumes. Later fixture-based browser display/download interaction passed; see the latest VERIFICATION.md. Gmail sending stays disabled.
 
 ## Current chat workflow (supersedes older workflow steps below)
 
 Chat is the default screen. Live greetings/questions persist a conversational reply without creating an automation task. Imported-lead draft instructions queue draft generation automatically; ordinary Chat does not require Tasks ? Start. Setup sample verification and legacy review APIs retain their review gates. Chat never authorizes sending.
 
-Public discovery is a separate tool: privately configure TAVILY_API_KEY, SEARCH_FREE_TIER_CONFIRMED=true and SEARCH_DATA_CONSENT=true in .env after confirming the free Researcher plan at https://app.tavily.com (no card or paid overages). Restart after configuration. Queries go to Tavily and bounded retrieved excerpts to Gemini. Configuration alone is not verified retrieval. No search credentials were configured at the latest check; discovery pauses honestly instead of fabricating results. Gemini Search grounding is not used.
+Public discovery is a separate tool: privately configure TAVILY_API_KEY, SEARCH_FREE_TIER_CONFIRMED=true and SEARCH_DATA_CONSENT=true in .env after confirming the free Researcher plan at https://app.tavily.com (no card or paid overages). Restart after configuration. Queries go to Tavily and bounded retrieved excerpts to Gemini. Configuration alone is not verified retrieval. Actual search setup and retrieval were verified in the later October 12 milestone; errors and quota pauses remain visible. Gemini Search grounding is not used.
 
 Try ?UAE mein 10 hardware companies dhoondo?. Results appear inline with source links, retrieval times and unknown missing contacts. One Basic search per job retrieves at most 20 pages; requested results are capped at 20 and local search reservations at 100/month. Evidence filtering can return fewer results; it does not independently prove business/contact accuracy. Save known-email results to Leads explicitly if wanted. Discovery is not outreach consent.
 
 Use Create CSV on the desired result card, then Download CSV. ?Inki CSV banao? works when one result set is unambiguous; otherwise the bot asks which set. Downloads are persisted, immutable snapshots of that selected set, never the full lead database. Analysis uses at most the first 20 saved rows. Activity logs are collapsed by default. Errors, quota holds, Pause/Resume/Cancel and saved drafts remain visible after refresh.
 
-Search/account setup is pending; real Gemini greeting, selection, personalized draft and selected CSV workflows passed through the actual HTTP contract using isolated samples. Browser interaction remains unverified because installed tooling could not initialize. See VERIFICATION.md and INTEGRATIONS_AUDIT.md. WhatsApp, LinkedIn, mailbox filing and voice are not implemented.
+Actual search/account setup and five source-backed results were verified later. Real Gemini greeting, selection, personalized draft and selected CSV workflows passed through the actual HTTP contract using isolated samples. Installed-Chrome UI checks passed in the latest redesign; their API responses are simulated. See VERIFICATION.md and INTEGRATIONS_AUDIT.md. WhatsApp, LinkedIn, mailbox filing and voice are not implemented.
 
 # Outreach Workbench
 
@@ -88,9 +96,9 @@ It performs real Gemini requests and consumes free quota, using two synthetic pr
 
 Private `OUTREACH_LANGUAGE=english` makes newly generated outgoing draft subjects/bodies English even when chat instructions are Roman Urdu. Existing saved drafts remain their original content. The single-test preview can be revised before any authorization or attempt; its recipient stays fixed and the review digest changes. Previously authorized, attempted or uncertain content cannot be edited. A revised preview always needs fresh exact-content authorization; sending remains disabled while reviewing.
 
-Current local status (October 9, 2026): actual Google consent/callback and refresh-token authentication passed with gmail.send only. Sending remains disabled; no real email has been sent. Gmail can prepare one local test-email review for later explicit authorization. Authentication does not verify send acceptance, inbox delivery or the configured sender's identity. Earlier missing-account statements describe previous milestone snapshots.
+Current local status: actual Google consent/callback and refresh-token authentication passed with gmail.send only. One explicitly authorized test email was accepted and user-confirmed received; inbox/spam placement was unspecified. Sending is disabled again; no new email was sent during this redesign. Gmail can prepare one local test-email review for later explicit authorization. Authentication does not verify send acceptance, inbox delivery or the configured sender's identity. Earlier missing-account statements describe previous milestone snapshots.
 
-See [GMAIL_SETUP.md](GMAIL_SETUP.md) for exact Google console, private `.env`, callback, scope, token protection, disconnect and single-test instructions. Configure OAuth Web application credentials and `GMAIL_SENDER_EMAIL`, register `http://localhost:3000/api/gmail/callback`, then connect and consent yourself. Keep `GMAIL_ENABLE_SENDING=false` during setup. No account was connected and no real message was sent during development.
+See [GMAIL_SETUP.md](GMAIL_SETUP.md) for exact Google console, private `.env`, callback, scope, token protection, disconnect and single-test instructions. Configure OAuth Web application credentials and `GMAIL_SENDER_EMAIL`, register `http://localhost:3000/api/gmail/callback`, then connect and consent yourself. Keep `GMAIL_ENABLE_SENDING=false` during setup. Account authentication and the later authorized single test are documented in VERIFICATION.md.
 
 The Gmail screen snapshots selected drafts and recipients, shows complete subject/body previews, and requires an explicit campaign authorization with a maximum count and expiry. Real sending additionally needs `GMAIL_ENABLE_SENDING=true`. Merely enabling the flag, connecting OAuth, saving a campaign or creating a single-test review does not authorize delivery. Only gmail.send scope is used; drafts are local and the app cannot read Sent. Uncertain outcomes must be manually reconciled and are never automatically resent. Sent means accepted by Gmail, not guaranteed delivery. WhatsApp and LinkedIn remain unimplemented.
 
@@ -98,7 +106,7 @@ The Gmail screen snapshots selected drafts and recipients, shows complete subjec
 
 CSV must have a header, UTF-8 encoding and consistent column counts. XLSX uses its first worksheet. Limit: 2 MB uploaded, 1,000 data rows, 50 columns, 2,000 characters per cell. XLSX decompression is limited to 20 MB from ZIP directory metadata. This is a local input guard, not a hardened public file-processing sandbox. Formula cells and formula-like leading `=`, `+`, `@` mapped values are rejected. No formulas, links or macros are executed. CSV row numbers count parsed records; multiline cells mean these may differ from physical line numbers.
 
-Previews remain in memory for 15 minutes, capped at 10. They disappear on restart; original files are not written to disk. SQLite in `data/workbench.sqlite` stores leads, source filename, chat, tasks, per-lead attempts, drafts, campaign/action ledgers and activity. Editing a lead affects subsequent draft generation; task recipient IDs remain fixed and reviewed Gmail recipient/content snapshots are immutable. Notes are stored locally and included only in live per-lead draft requests; email is not needed in AI prompts. Back up the data folder while the server is stopped. The database is not encrypted; protect the Windows account and disk. OAuth tokens use encrypted local files as described in GMAIL_SETUP.md. Mode selection resets to demo on page refresh.
+Previews remain in memory for 15 minutes, capped at 10. They disappear on restart; original files are not written to disk. SQLite in `data/workbench.sqlite` stores leads, source filename, chat, tasks, per-lead attempts, drafts, campaign/action ledgers and activity. Editing a lead affects subsequent draft generation; task recipient IDs remain fixed and reviewed Gmail recipient/content snapshots are immutable. Notes are stored locally and included only in live per-lead draft requests; email is not needed in AI prompts. Back up the data folder while the server is stopped. The database is not encrypted; protect the Windows account and disk. OAuth tokens use encrypted local files as described in GMAIL_SETUP.md. Mode initializes to Live only when private configuration/consent allows it; otherwise Demo.
 
 ## Troubleshooting
 
@@ -115,7 +123,7 @@ Windows launch commands prefer IPv4 DNS results because this laptop's IPv6 route
 - Planning failures: review the task and connection; create a new request. Plans are not retried automatically.
 - No selected leads: check city/company filters or import records first.
 - `.env` changes require restart. `npm.cmd start` requires a successful build.
-- Browser verification was unavailable in this tool environment; see VERIFICATION.md for checks and limitations.
+- Installed-Chrome browser checks now pass; native IME and physical mobile keyboard acceptance remain. See VERIFICATION.md for exact scope.
 
 ## Chat behavior
 

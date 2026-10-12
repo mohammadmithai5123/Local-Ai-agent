@@ -1,3 +1,9 @@
+## UI milestone — October 12, 2026
+
+Implemented and checked: calm chat-first shell, desktop sidebar/mobile drawer, optional details, readable conversation and bottom composer, scroll-aware updates, honest partial/quota cards, count-labeled immutable snapshots, searchable/filterable Leads with local visible-row export, compact Tasks, grouped Settings, simplified Connections and collapsed activity. Installed Chrome covered 375/768/1440 px without page overflow across all navigation screens; 36 UI checks and 50 tests passed. No providers, backend workflows or data were rebuilt.
+
+Remaining UI acceptance: native OS IME candidate confirmation and physical mobile keyboard/viewport behavior. Fixture-based browser checks do not renew live provider/authentication verification. Preserve existing five-company partial discovery, both CSV snapshots, 19 live drafts and Gmail ledger/authentication; sending remains disabled. WhatsApp, LinkedIn, voice, mailbox filing and deployment security remain pending. This milestone does not finish the entire product. Older pending-browser statements below are historical.
+
 ## October 12 original-task completion
 
 Original interrupted discovery processed every cached source and returned five evidence-backed companies, with one extra Gemini batch request and zero extra Tavily searches. New five-row CSV plus original one-row snapshot preserved. Deterministic contact extraction, durable request counters, honest quota timing, direct result-card Resume and versioned immutable exports implemented. Browser checks still pending due to tooling initialization failure. Further discovery would require an explicit new search/refresh, not reprocessing completed sources. WhatsApp/LinkedIn/voice/mailbox filing remain deferred; sending disabled.
