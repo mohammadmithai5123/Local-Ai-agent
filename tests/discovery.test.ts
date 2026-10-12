@@ -7,7 +7,7 @@ import {openStore} from '../server/store.js';
 import {Supervisor} from '../server/supervisor.js';
 import {ChatEngine} from '../server/chat-engine.js';
 import {planSchema,RateLimit} from '../server/provider.js';
-import {validateCompanies,searchPublic} from '../server/discovery.js';
+import {validateCompanies,searchPublic,explicitContacts,extractCompanies} from '../server/discovery.js';
 import {exportCsv,prepareExport,resultSnapshot,addRows,csvCell} from '../server/results.js';
 import {cleanupDemo} from '../server/demo-cleanup.js';
 import {exportData,restoreData} from '../server/data-backup.js';
@@ -24,8 +24,29 @@ test('source validation requires exact company/location/category evidence, blank
  const db=openStore(':memory:');try{db.prepare('INSERT INTO result_sets VALUES(?,?,?,?,?,?,?,?)').run('set','request','UAE hardware','public-tavily',10,'partial','Only source evidence retained','2026-10-10');assert.equal(addRows(db,'set',rows,10),1);
   const exported:any=prepareExport(db,'set'),csv=exportCsv(db,String(exported.id));assert.match(csv.content,/Sample Hardware/);assert.match(csv.content,/info@hardware.example.com/);
   const old=csv.content;addRows(db,'set',[{...rows[0],name:'Another'}],10);assert.equal(exportCsv(db,String(exported.id)).content,old,'CSV snapshot cannot grow after resume');
+  const updated:any=prepareExport(db,'set');assert.notEqual(updated.id,exported.id);assert.match(updated.filename,/2-results/);assert.equal(resultSnapshot(db)[0].exports.length,2);assert.equal(prepareExport(db,'set').id,updated.id);
   assert.equal(csvCell('=HYPERLINK("bad")'),'"\'=HYPERLINK(""bad"")"');assert.equal(csvCell(' \t+123'),'"\' \t+123"');assert.equal(csvCell('نام,\n"Company"'),'"نام,\n""Company"""');
  }finally{db.close();}
+});
+
+test('explicit contacts require same-line company association and leave ambiguous/directory contacts unknown',()=>{
+ const row=validateCompanies(page,query,{companies:[{...candidate,email:'',phone:'',website:''}]})[0];
+ assert.equal(explicitContacts(page,row).email,'info@hardware.example.com');
+ assert.equal(explicitContacts(page,row).phone,'+971 555 12345');
+ assert.equal(explicitContacts({...page,content:'Directory operator email operator@example.com\nSample Hardware supplies tools in Dubai'},row).email,'');
+ assert.equal(explicitContacts({...page,content:'Sample Hardware email a@example.com or b@example.com'},row).email,'');
+});
+
+test('three cached sources use one interpretation call; quota persists progress/count without invented retry timing',async()=>{
+ const originalFetch=globalThis.fetch,saved={...process.env};Object.assign(process.env,{GEMINI_API_KEY:'private-test',FREE_TIER_CONFIRMED:'true',AI_DATA_CONSENT:'true',GEMINI_MODEL:'gemini-3.5-flash-lite',TAVILY_API_KEY:'private-search',SEARCH_FREE_TIER_CONFIRMED:'true',SEARCH_DATA_CONSENT:'true'});
+ const db=openStore(':memory:');let calls=0,searches=0;const engine=new ChatEngine(db,async()=>intent('discovery'),async()=>{searches++;return [page,page,page];},extractCompanies);const sup=new Supervisor(db);sup.tools=()=>engine.tick();
+ try{engine.submit('batch','Find hardware','live');await sup.tick();await sup.tick();globalThis.fetch=async()=>{calls++;return new Response('{}',{status:429});};await sup.tick();assert.equal(calls,1);assert.match(String(db.prepare("SELECT reason FROM tasks WHERE id='batch'").get()!.reason),/0 of 10 verified; paused due to AI quota/);assert.equal(db.prepare('SELECT count(*) n FROM task_retry_holds').get()!.n,0);assert.equal(db.prepare("SELECT cursor FROM tool_jobs WHERE task_id='batch'").get()!.cursor,0);
+ globalThis.fetch=async()=>{calls++;return new Response(JSON.stringify({candidates:[{content:{parts:[{text:JSON.stringify({pages:[0,1,2].map(index=>({index,companies:[{name:candidate.name,location:candidate.location,nameEvidence:candidate.nameEvidence,locationEvidence:candidate.locationEvidence,categoryEvidence:candidate.categoryEvidence}]}))})}]}}]}));};sup.control('batch','resume');await sup.tick();await sup.tick();assert.equal(searches,1);assert.equal(calls,2);assert.equal(db.prepare("SELECT cursor FROM tool_jobs WHERE task_id='batch'").get()!.cursor,3);assert.equal(resultSnapshot(db)[0].rows.length,1);assert.equal(JSON.parse(String(db.prepare("SELECT args FROM tool_jobs WHERE task_id='batch'").get()!.args)).extractionStats.calls,2);
+ }finally{db.close();globalThis.fetch=originalFetch;for(const key of ['GEMINI_API_KEY','FREE_TIER_CONFIRMED','AI_DATA_CONSENT','GEMINI_MODEL','TAVILY_API_KEY','SEARCH_FREE_TIER_CONFIRMED','SEARCH_DATA_CONSENT']){if(saved[key]===undefined)delete process.env[key];else process.env[key]=saved[key];}}
+});
+
+test('legacy unique export migration preserves every snapshot and allows new versions after reopen',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'export-migration-')),path=join(dir,'store.sqlite');let db=openStore(path);try{db.exec("DROP TABLE result_exports; CREATE TABLE result_exports(id TEXT PRIMARY KEY,set_id TEXT UNIQUE NOT NULL REFERENCES result_sets(id),filename TEXT NOT NULL,created TEXT NOT NULL,content TEXT NOT NULL DEFAULT '')");db.prepare('INSERT INTO result_sets VALUES(?,?,?,?,?,?,?,?)').run('set','r','Results','public-tavily',10,'partial',null,'now');db.prepare('INSERT INTO result_exports VALUES(?,?,?,?,?)').run('old','set','old.csv','now','unchanged');db.close();db=openStore(path);assert.equal(exportCsv(db,'old').content,'unchanged');addRows(db,'set',validateCompanies(page,query,{companies:[candidate]}),10);assert.notEqual(prepareExport(db,'set').id,'old');}finally{db.close();rmSync(dir,{recursive:true,force:true});}
 });
 test('durable discovery checkpoints, quota/resume, CSV reference, ambiguity and greetings without jobs',async()=>{
  const old={key:process.env.TAVILY_API_KEY,free:process.env.SEARCH_FREE_TIER_CONFIRMED,consent:process.env.SEARCH_DATA_CONSENT};Object.assign(process.env,{TAVILY_API_KEY:'test-only',SEARCH_FREE_TIER_CONFIRMED:'true',SEARCH_DATA_CONSENT:'true'});

@@ -28,6 +28,11 @@ export function openStore(path: string) {
       CREATE TABLE IF NOT EXISTS search_usage(month TEXT PRIMARY KEY,used INTEGER NOT NULL);`);
     if(!db.prepare('PRAGMA table_info(chat_requests)').all().some((c:any)=>c.name==='retry_at'))db.exec('ALTER TABLE chat_requests ADD COLUMN retry_at INTEGER');
     if(!db.prepare('PRAGMA table_info(result_exports)').all().some((c:any)=>c.name==='content'))db.exec("ALTER TABLE result_exports ADD COLUMN content TEXT NOT NULL DEFAULT ''");
+    if(String(db.prepare("SELECT sql FROM sqlite_master WHERE name='result_exports'").get()?.sql).includes('set_id TEXT UNIQUE'))db.exec(`BEGIN;
+      ALTER TABLE result_exports RENAME TO result_exports_single;
+      CREATE TABLE result_exports(id TEXT PRIMARY KEY,set_id TEXT NOT NULL REFERENCES result_sets(id),filename TEXT NOT NULL,created TEXT NOT NULL,content TEXT NOT NULL DEFAULT '');
+      INSERT INTO result_exports SELECT * FROM result_exports_single;
+      DROP TABLE result_exports_single; COMMIT;`);
     return db;
 }
 export type Store = ReturnType<typeof openStore>;

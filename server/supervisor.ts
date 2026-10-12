@@ -29,7 +29,7 @@ export class Supervisor {
             this.db.exec('BEGIN');try{for(const l of leads)this.db.prepare("INSERT OR IGNORE INTO steps(task_id,lead_id,state) VALUES(?,?,'pending')").run(id,l.id);
             this.db.prepare("UPDATE tasks SET state='paused',reason=?,next_retry=NULL WHERE id=?").run(leads.length?'Planning succeeded. Review selected recipients, then Start drafts.':'No matching leads; create a new request.',id);this.db.prepare('DELETE FROM task_plans WHERE task_id=?').run(id);
             this.db.prepare('INSERT INTO chat VALUES(?,?,?,?)').run(randomUUID(),'assistant',`${task.mode==='demo'?'[DEMO] ':''}${leads.length} imported lead(s) selected. ${leads.length?'Review the task and Start drafts to generate personalized drafts.':'No matching leads were found.'} No messages sent.`,new Date().toISOString());event(this.db,id,'Planning succeeded; awaiting draft review.');this.db.exec('COMMIT');}catch(e){this.db.exec('ROLLBACK');throw e;}
-        }catch(e){if(!active())return;const transient=e instanceof TransientFailure,quota=e instanceof RateLimit;if((transient||quota)&&e.retryAt)this.db.prepare('INSERT OR REPLACE INTO task_retry_holds VALUES(?,?)').run(id,e.retryAt);this.db.prepare('UPDATE tasks SET state=?,reason=?,next_retry=NULL WHERE id=?').run(transient||quota?'paused':'failed',`Planning: ${e instanceof Error?e.message:'failed'}${quota?' Resume manually after '+new Date(e.retryAt).toISOString():''}`,id);event(this.db,id,transient?'Planning retry budget exhausted; manual resume required.':'Planning failed.');}
+        }catch(e){if(!active())return;const transient=e instanceof TransientFailure,quota=e instanceof RateLimit;if((transient||quota)&&e.retryAt)this.db.prepare('INSERT OR REPLACE INTO task_retry_holds VALUES(?,?)').run(id,e.retryAt);this.db.prepare('UPDATE tasks SET state=?,reason=?,next_retry=NULL WHERE id=?').run(transient||quota?'paused':'failed',`Planning: ${e instanceof Error?e.message:'failed'}${quota?(e.retryAt?' Resume manually after '+new Date(e.retryAt).toISOString():'. Retry timing unknown; check quota before manual resume.'):''}`,id);event(this.db,id,transient?'Planning retry budget exhausted; manual resume required.':'Planning failed.');}
     }
     control(id: string, action: string) {
         const task: any = this.db.prepare('SELECT * FROM tasks WHERE id=?').get(id);
@@ -52,6 +52,7 @@ export class Supervisor {
             if (task.state === 'failed')
                 throw Error('Failed tasks cannot resume; create a new task.');
             this.db.prepare("UPDATE tasks SET state='queued',reason=NULL,next_retry=NULL WHERE id=?").run(id);
+            this.db.prepare('DELETE FROM task_retry_holds WHERE task_id=?').run(id);
         }
         else
             throw Error('Unknown task action.');
@@ -103,7 +104,10 @@ export class Supervisor {
                 if (current.state !== 'running')
                     return;
                 if(err instanceof TransientFailure){if(err.retryAt)this.db.prepare('INSERT OR REPLACE INTO task_retry_holds VALUES(?,?)').run(task.id,err.retryAt);this.db.prepare("UPDATE tasks SET state='paused',reason=?,next_retry=NULL WHERE id=?").run(`Draft generation: ${err.message}`,task.id);}
-                else if (err instanceof RateLimit && step.attempts < 2) {
+                else if (err instanceof RateLimit && !err.retryAt) {
+ this.db.prepare("UPDATE tasks SET state='paused',reason='Provider quota reached; retry timing unknown. Check quota before manual resume.',next_retry=NULL WHERE id=?").run(task.id);
+ }
+ else if (err instanceof RateLimit && step.attempts < 2) {
                     this.db.prepare("UPDATE tasks SET state='paused',reason='Provider rate limit; bounded retry scheduled',next_retry=? WHERE id=?").run(err.retryAt, task.id);
                 }
                 else

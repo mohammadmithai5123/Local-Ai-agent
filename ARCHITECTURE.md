@@ -1,3 +1,13 @@
+## Efficient discovery resume and immutable CSV versions
+
+Discovery reuses private persisted source pages and contiguous cursor. Up to three unfinished sources share one bounded interpretation request; source indexes must be unique/complete and per-company name/location/category evidence is validated against original cached content. Compact input selects relevant lines with neighbors, bounded to 5,000 characters per source. Completed sources are never replayed. Batch validation/row insertion and each source cursor advance commit atomically; a failed/cancelled batch leaves unfinished sources pending. Safe request counts/status/payload bytes persist in private tool-job arguments, including 503 attempts; historical memory-only counts cannot be reconstructed exactly.
+
+Source URLs/retrieval timestamps are application facts. Deterministic extraction fills a missing email/explicit labeled phone or same-origin public URL only on a short source line containing the validated company name and one unambiguous value. Directory operator/unassociated or ambiguous contacts stay unknown. AI outputs only company identity/location and short exact evidence for relevance; it does not invent contact details.
+
+Result exports are now multiple immutable versions per set. Transactional migration removes the former per-set uniqueness while preserving every existing export ID, filename and byte content. Export reuses identical content or creates a new ID/filename containing row count; latest and older downloads coexist. Backup v2 already includes all export rows, so schema/version format remains compatible.
+
+429 parses Retry-After and Google RetryInfo without logging response content. Known delays gate manual Resume; no timing means an explicit unknown status and no scheduled draft retry. Successful manual resume clears stale holds. Discovery pause reason contains verified count (retrieved evidence only) and target; controls live directly on result cards as well as progress. No paid fallback, provider/model switch or sending path was enabled.
+
 ## Public-search validation clarification
 
 Blank name/location/category evidence is treated as a candidate-level exclusion, never an accepted company and never a reason to discard valid siblings. Wrong types, oversized fields and other schema failures still pause with an explicit invalid-structured-fields reason. Required exact source evidence and associated contact validation remain unchanged. Actual Tavily search succeeded; extraction quota can independently pause a job while its sources, cursor, partial results and CSV snapshot remain durable.

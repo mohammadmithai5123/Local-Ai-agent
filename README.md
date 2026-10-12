@@ -1,3 +1,9 @@
+## Latest resume and CSV behavior
+
+The original UAE hardware discovery now has 5 source-backed companies from all 20 cached pages. Remaining three sources used one Gemini call and no additional Tavily search. Ten matching companies were not established; the partial card explains the evidence limit. Original one-company CSV is preserved, and a new five-company CSV is available with its count. Refresh/restart preserve versions and results. Unknown contacts remain unknown; source evidence is not independent verification or outreach consent. Gmail sending remains disabled.
+
+Paused discovery cards include Resume discovery directly, even if an older task is outside the short progress list. Provider retry timing is shown only when supplied; otherwise check quota in AI Studio before manually resuming. See latest VERIFICATION.md for actual API results and unverified browser checks.
+
 ## Latest public-search status (October 12)
 
 Private search setup is complete. Actual Tavily retrieval passed (20 pages), with one persisted source-backed company; Gemini extraction quota paused the remaining sources. The requested ten-company workflow is incomplete. Exact Roman Urdu CSV follow-up exported precisely the one saved result; API and app-restart persistence passed. The CSV is an immutable snapshot and will not grow if discovery resumes. Browser display/download interaction remains unverified; see the latest VERIFICATION.md. Gmail sending stays disabled.

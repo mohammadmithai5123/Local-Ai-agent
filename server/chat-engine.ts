@@ -6,7 +6,7 @@ import {plan,generate,RateLimit} from './provider.js';
 import {TransientFailure} from './transient.js';
 import {selectLeads} from './selection.js';
 import {addRows,prepareExport,type CompanyRow} from './results.js';
-import {searchPublic,extractCompanies,SearchFailure,type DiscoveryQuery,type SearchPage} from './discovery.js';
+import {searchPublic,extractCompanies,extractCompanyBatch,SearchFailure,type DiscoveryQuery,type SearchPage} from './discovery.js';
 
 export class ChatEngine {
  constructor(public db:Store,public classify=plan,public search=searchPublic,public extract=extractCompanies){
@@ -76,11 +76,14 @@ export class ChatEngine {
     this.db.prepare('UPDATE result_sets SET state=?,reason=? WHERE id=?').run(count<args.limit?'partial':'completed',reason,args.setId);this.complete(id,reason);return;
    }
    this.db.prepare('UPDATE tasks SET reason=? WHERE id=?').run(`Validating source ${job.cursor+1} of ${pages.length}; ${count} companies retained`,id);
-   const rows=await this.extract(pages[job.cursor],query,{active});if(!active())return;
-   this.db.exec('BEGIN');try{addRows(this.db,args.setId,rows,Math.min(20,args.limit));this.db.prepare('UPDATE tool_jobs SET cursor=cursor+1 WHERE task_id=?').run(id);this.db.exec('COMMIT');}catch(e){this.db.exec('ROLLBACK');throw e;}
+   const batch=pages.slice(job.cursor,job.cursor+(this.extract===extractCompanies?3:1));
+   const onRequest=(metadata:{httpStatus:number|null;payloadBytes:number;attempt:number})=>{args.extractionStats ||= {calls:0,statuses:[],payloadBytes:0};args.extractionStats.calls++;args.extractionStats.statuses.push(metadata.httpStatus);args.extractionStats.payloadBytes+=metadata.payloadBytes;this.db.prepare('UPDATE tool_jobs SET args=? WHERE task_id=?').run(JSON.stringify(args),id);};
+   const results=this.extract===extractCompanies?await extractCompanyBatch(batch,query,{active,onRequest}):[await this.extract(batch[0],query,{active,onRequest})];if(!active())return;
+   this.db.exec('BEGIN');try{for(let index=0;index<results.length;index++){addRows(this.db,args.setId,results[index],Math.min(20,args.limit));this.db.prepare('UPDATE tool_jobs SET cursor=? WHERE task_id=?').run(job.cursor+index+1,id);}this.db.exec('COMMIT');}catch(e){this.db.exec('ROLLBACK');throw e;}
   }catch(e){if(!active())return;const retryAt=e instanceof RateLimit?e.retryAt:e instanceof SearchFailure||e instanceof TransientFailure?e.retryAt:null;
    if(retryAt)this.db.prepare('INSERT OR REPLACE INTO task_retry_holds VALUES(?,?)').run(id,retryAt);
-   const reason=e instanceof SearchFailure?e.message:e instanceof RateLimit?'AI extraction quota reached. Resume manually after the provider retry time.':e instanceof TransientFailure?e.message:e instanceof z.ZodError?'AI extraction returned invalid structured fields. Completed source checkpoints remain saved; resume manually.':'Tool failed or timed out. Completed source checkpoints remain saved; resume manually.';
+   const count=job.kind==='discovery'?Number(this.db.prepare('SELECT count(*) n FROM result_rows WHERE set_id=?').get(args.setId)?.n):0;
+   const reason=e instanceof SearchFailure?e.message:e instanceof RateLimit?`${count} of ${args.limit} verified; paused due to AI quota. ${retryAt?'Resume after the provider retry time; availability is not guaranteed.':'Retry timing unknown; check AI Studio quota before manual resume.'} Verified means matching retrieved source evidence, not independent business verification.`:e instanceof TransientFailure?e.message:e instanceof z.ZodError?'AI extraction returned invalid structured fields. Completed source checkpoints remain saved; resume manually.':'Tool failed or timed out. Completed source checkpoints remain saved; resume manually.';
    this.db.prepare("UPDATE tasks SET state='paused',reason=?,next_retry=NULL WHERE id=?").run(reason,id);
    if(job.kind==='discovery')this.db.prepare("UPDATE result_sets SET state='partial',reason=? WHERE id=?").run(reason,args.setId);event(this.db,id,reason);
   }

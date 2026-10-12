@@ -1,3 +1,7 @@
+## October 12 original-task completion
+
+Original interrupted discovery processed every cached source and returned five evidence-backed companies, with one extra Gemini batch request and zero extra Tavily searches. New five-row CSV plus original one-row snapshot preserved. Deterministic contact extraction, durable request counters, honest quota timing, direct result-card Resume and versioned immutable exports implemented. Browser checks still pending due to tooling initialization failure. Further discovery would require an explicit new search/refresh, not reprocessing completed sources. WhatsApp/LinkedIn/voice/mailbox filing remain deferred; sending disabled.
+
 ## October 12 verification update
 
 Completed private Tavily setup and actual Basic retrieval; verified one source-backed result, exact selected-set CSV and backend/app-restart persistence. Remaining: Gemini quota recovery and manual resume to process remaining sources (ten results not guaranteed), browser rendering/download acceptance. Existing CSV is a one-row immutable snapshot. WhatsApp, LinkedIn, voice and mailbox filing remain pending; sending disabled.
