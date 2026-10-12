@@ -1,6 +1,6 @@
 # WhatsApp setup — zero-paid-budget scope
 
-Official documentation checked October 12, 2026. Is milestone mein automatic WhatsApp sending implement/enabled nahi hai. Koi message send nahi hua.
+Official Developer Hub aur Meta-owned Cloud API collection October 13, 2026 ko dobara check kiye. Free development assets advertise hote hain, lekin aapke account ki eligibility abhi login ke baghair verify nahi hui. Is milestone mein automatic WhatsApp sending implement/enabled nahi hai. Koi message send nahi hua. Agla step sirf neeche diya gaya private Meta login hai; test API adapter/account setup abhi pending hai.
 
 ## Kaunsa WhatsApp product?
 
