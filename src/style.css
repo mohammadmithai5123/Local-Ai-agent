@@ -16,3 +16,5 @@ summary{padding:7px 0;min-height:38px}.connectionCard .resultDetails{width:100%;
 @media(max-width:767px){input,textarea,select{font-size:16px}summary{min-height:44px}.composerFooter button{min-height:44px}}
 .tableWrap{position:relative}
 .appShell,.chatMain{overflow:clip}
+
+.whatsappDialog{width:min(580px,calc(100vw - 32px))}.whatsappDialog h2{font-size:20px}.whatsappDialog>p{font-size:13px}.formError{color:#8d3b25;font-size:13px}.whatsappPreview .sectionHead{flex-wrap:wrap}.whatsappBody{padding:18px;background:var(--soft);border:1px solid var(--line);border-radius:8px;margin:18px 0;color:var(--ink)}.whatsappPreview .download{margin:10px 0}.whatsappPreview label{font-weight:400}.whatsappPreview .badge{max-width:100%;white-space:normal}.whatsappPreview .row{flex-wrap:wrap}@media(min-width:1200px){.connectionGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}

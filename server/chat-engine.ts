@@ -1,4 +1,5 @@
 import {randomUUID} from 'node:crypto';
+import {WhatsAppWorkspace} from './whatsapp.js';
 import {z} from 'zod';
 import type {Store} from './store.js';
 import {event} from './store.js';
@@ -9,7 +10,7 @@ import {addRows,prepareExport,type CompanyRow} from './results.js';
 import {searchPublic,extractCompanies,extractCompanyBatch,SearchFailure,type DiscoveryQuery,type SearchPage} from './discovery.js';
 
 export class ChatEngine {
- constructor(public db:Store,public classify=plan,public search=searchPublic,public extract=extractCompanies){
+ constructor(public db:Store,public classify=plan,public search=searchPublic,public extract=extractCompanies,public whatsapp=new WhatsAppWorkspace(db)){
   db.prepare("UPDATE chat_requests SET state='paused',reason='App restarted. Resume your request.' WHERE state IN ('queued','running')").run();
  }
  reply(text:string){this.db.prepare('INSERT INTO chat VALUES(?,?,?,?)').run(randomUUID(),'assistant',text,new Date().toISOString());}
@@ -22,6 +23,7 @@ export class ChatEngine {
  }
  async classifyRequest(request:any){const id=request.id;this.db.prepare("UPDATE chat_requests SET state='running',reason='Understanding your instruction',retry_at=NULL WHERE id=?").run(id);const active=()=>this.db.prepare('SELECT state FROM chat_requests WHERE id=?').get(id)?.state==='running';
   try{
+   if(/\bwhats\s*app\b/i.test(request.text)&&/draft|preview|message|send|bhej|outreach/i.test(request.text)){this.finishReply(id,'WhatsApp previews are available from a lead or company result: choose Prepare WhatsApp preview, select the country and exact number, then review. Automatic WhatsApp sending is not implemented. A manual handoff does not send; recipient opt-in is required before handoff. No action performed by this chat reply.');return;}
    const history=(this.db.prepare('SELECT role,text FROM chat ORDER BY created DESC,rowid DESC LIMIT 8').all() as {role:string;text:string}[]).reverse().filter(m=>m.text!==request.text).map(m=>({...m,text:m.text.slice(0,600)}));
    const p=/\bcsv\b/i.test(request.text)?{kind:'export',reply:'',city:'',company:'',country:'',industry:'',limit:1,language:'english'}:await this.classify(request.text,request.mode,{active,stage:'planning'},history);
    if(!active())return;
@@ -55,6 +57,7 @@ export class ChatEngine {
  finishReply(id:string,text:string){this.db.exec('BEGIN');try{this.reply(text);this.db.prepare("UPDATE chat_requests SET state='completed',reason=NULL WHERE id=?").run(id);this.db.exec('COMMIT');}catch(e){this.db.exec('ROLLBACK');throw e;}}
  async runJob(job:any){const args=JSON.parse(job.args),id=job.task_id;this.db.prepare("UPDATE tasks SET state='running' WHERE id=?").run(id);const active=()=>this.db.prepare('SELECT state FROM tasks WHERE id=?').get(id)?.state==='running';
   try{
+   if(job.kind==='whatsapp_preview'){const reply=await this.whatsapp.run(args.previewId,{active,stage:'whatsapp_preview'});if(active()&&reply)this.complete(id,reply);return;}
    if(job.kind==='export'){const exported=prepareExport(this.db,args.setId);this.complete(id,`CSV created for the selected results only. Use Download CSV in its result card.`,String(exported.id));return;}
    if(job.kind==='analysis'){
     const rows=this.db.prepare('SELECT data FROM result_rows WHERE set_id=? ORDER BY position LIMIT 20').all(args.setId).map((r:any)=>JSON.parse(r.data));
@@ -83,7 +86,7 @@ export class ChatEngine {
   }catch(e){if(!active())return;const retryAt=e instanceof RateLimit?e.retryAt:e instanceof SearchFailure||e instanceof TransientFailure?e.retryAt:null;
    if(retryAt)this.db.prepare('INSERT OR REPLACE INTO task_retry_holds VALUES(?,?)').run(id,retryAt);
    const count=job.kind==='discovery'?Number(this.db.prepare('SELECT count(*) n FROM result_rows WHERE set_id=?').get(args.setId)?.n):0;
-   const reason=e instanceof SearchFailure?e.message:e instanceof RateLimit?`${count} of ${args.limit} verified; paused due to AI quota. ${retryAt?'Resume after the provider retry time; availability is not guaranteed.':'Retry timing unknown; check AI Studio quota before manual resume.'} Verified means matching retrieved source evidence, not independent business verification.`:e instanceof TransientFailure?e.message:e instanceof z.ZodError?'AI extraction returned invalid structured fields. Completed source checkpoints remain saved; resume manually.':'Tool failed or timed out. Completed source checkpoints remain saved; resume manually.';
+   const reason=job.kind==='whatsapp_preview'?(e instanceof RateLimit?'WhatsApp preview paused due to AI quota. '+(retryAt?'Resume manually after the provider retry time.':'Retry timing unknown; check AI Studio before resuming.'):e instanceof TransientFailure?e.message:'WhatsApp preview failed validation or generation. Review configuration and resume manually; no message submitted.') : e instanceof SearchFailure?e.message:e instanceof RateLimit?`${count} of ${args.limit} verified; paused due to AI quota. ${retryAt?'Resume after the provider retry time; availability is not guaranteed.':'Retry timing unknown; check AI Studio quota before manual resume.'} Verified means matching retrieved source evidence, not independent business verification.`:e instanceof TransientFailure?e.message:e instanceof z.ZodError?'AI extraction returned invalid structured fields. Completed source checkpoints remain saved; resume manually.':'Tool failed or timed out. Completed source checkpoints remain saved; resume manually.';
    this.db.prepare("UPDATE tasks SET state='paused',reason=?,next_retry=NULL WHERE id=?").run(reason,id);
    if(job.kind==='discovery')this.db.prepare("UPDATE result_sets SET state='partial',reason=? WHERE id=?").run(reason,args.setId);event(this.db,id,reason);
   }

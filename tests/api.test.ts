@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto';
 for (const production of [true,false]) test(`real ${production?'production':'development'} API: import, duplicate requests, draft workflow, refresh and origin boundary`, { timeout: 45000 }, async () => {
     const dir = mkdtempSync(join(tmpdir(), 'workbench-api-'));
     const port = 32000 + Math.floor(Math.random() * 10000);
-    const child = spawn(process.execPath, ['--experimental-sqlite', '.runtime/server/index.js', ...(production?['--production']:[])], { env: { ...process.env, PORT: String(port), DB_PATH: join(dir, 'test.sqlite'), GEMINI_API_KEY: '', FREE_TIER_CONFIRMED: 'false', AI_DATA_CONSENT: 'false', GOOGLE_CLIENT_ID:'',GOOGLE_CLIENT_SECRET:'',GMAIL_ENABLE_SENDING:'false' }, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, ['--experimental-sqlite', '.runtime/server/index.js', ...(production?['--production']:[])], { env: { ...process.env, PORT: String(port), DB_PATH: join(dir, 'test.sqlite'), GEMINI_API_KEY: '', FREE_TIER_CONFIRMED: 'false', AI_DATA_CONSENT: 'false', GOOGLE_CLIENT_ID:'',GOOGLE_CLIENT_SECRET:'',GMAIL_ENABLE_SENDING:'false',WHATSAPP_TEST_ACCESS_TOKEN:'',WHATSAPP_TEST_PHONE_NUMBER_ID:'',WHATSAPP_GRAPH_VERSION:'',WHATSAPP_TEST_ASSET_CONFIRMED:'false',WHATSAPP_TEST_NO_BILLING_CONFIRMED:'false',WHATSAPP_TEST_DATA_CONSENT:'false' }, stdio: ['ignore', 'pipe', 'pipe'] });
     let stderr = '';
     child.stderr.on('data', d => stderr += d.toString());
     try {
@@ -66,6 +66,17 @@ for (const production of [true,false]) test(`real ${production?'production':'dev
         assert.equal((await fetch(`http://localhost:${port}/%ZZ`)).status,400);
         assert.equal((await call('chat', { ...req, requestId: randomUUID(), mode: 'live' })).status, 400);
         assert.equal((await call('demo', {}, { Origin: 'https://attacker.example' })).status, 400);
+        assert.equal((await call('whatsapp/test/check',{})).status,400);
+        assert.equal((await call('whatsapp/send',{})).status,400);
+        const waRequest={requestId:randomUUID(),source:{kind:'lead',id:state.leads.find((l:any)=>l.name==='Ayesha').id},country:'PK',phone:'03001234567',instruction:'Offer website development.',mode:'demo'};
+        assert.equal((await call('whatsapp/previews',{...waRequest,country:'AE',phone:'+923001234567'})).status,400);
+        const waCreated=await call('whatsapp/previews',waRequest);assert.equal(waCreated.status,200);
+        assert.equal((await call('whatsapp/previews',waRequest)).data.duplicate,true);
+        const waDeadline=Date.now()+7000;let waState=(await call('state')).data;
+        while(waState.whatsapp.previews[0]?.state!=='prepared'&&Date.now()<waDeadline){await new Promise(r=>setTimeout(r,150));waState=(await call('state')).data;}
+        assert.equal(waState.whatsapp.previews.length,1);assert.equal(waState.whatsapp.previews[0].state,'prepared');assert.match(waState.whatsapp.previews[0].body,/DEMO/);assert.equal(waState.whatsapp.sendingEnabled,false);assert.equal(waState.whatsapp.test.status,'Not configured');
+        assert.equal((await call(`whatsapp/previews/${waCreated.data.id}/handoff`,{digest:waState.whatsapp.previews[0].digest,confirm:true,recipientConsent:true})).status,400);
+        assert.equal((await call('state')).data.drafts.length,1);
     }
     finally {
         child.kill();

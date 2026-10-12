@@ -5,7 +5,8 @@ import { openStore, type Store } from './store.js';
 
 // Explicit allowlist: OAuth files and configuration-check fingerprints never enter exports.
 const legacyTables = ['leads','chat','tasks','steps','drafts','events','campaigns','mail_actions','task_plans','task_retry_holds'] as const;
-const tables = [...legacyTables,'chat_requests','tool_jobs','result_sets','result_rows','result_exports','search_usage'] as const;
+const v2Tables = [...legacyTables,'chat_requests','tool_jobs','result_sets','result_rows','result_exports','search_usage'] as const;
+const tables = [...v2Tables,'whatsapp_previews'] as const;
 export function exportData(db: Store, destination: string) {
     db.exec('BEGIN');
     try {
@@ -14,7 +15,7 @@ export function exportData(db: Store, destination: string) {
         // Authorization is deliberately not portable. Keep the durable send ledger.
         for (const row of data.campaigns as any[]) { row.authorized_at=null; row.expires=null; row.connection_id=null; }
         mkdirSync(dirname(destination), { recursive:true });
-        writeFileSync(destination, JSON.stringify({version:2,created:new Date().toISOString(),data}), {flag:'wx',mode:0o600});
+        writeFileSync(destination, JSON.stringify({version:3,created:new Date().toISOString(),data}), {flag:'wx',mode:0o600});
         db.exec('COMMIT');
     } catch(error) { db.exec('ROLLBACK'); throw error; }
 }
@@ -23,7 +24,7 @@ export function restoreData(source: string, destination: string) {
     if(statSync(source).size>100*1024*1024)throw Error('Backup exceeds 100 MiB limit.');
     const raw=readFileSync(source);
     const backup=JSON.parse(raw.toString('utf8'));
-    if(![1,2].includes(backup.version) || !backup.data || Object.keys(backup.data).some(t=>!tables.includes(t as any)) || legacyTables.some(t=>!Array.isArray(backup.data[t])) || (backup.version===2&&tables.some(t=>!Array.isArray(backup.data[t]))))throw Error('Unsupported backup format.');
+    if(![1,2,3].includes(backup.version) || !backup.data || Object.keys(backup.data).some(t=>!tables.includes(t as any)) || legacyTables.some(t=>!Array.isArray(backup.data[t])) || (backup.version===2&&v2Tables.some(t=>!Array.isArray(backup.data[t]))) || (backup.version===3&&tables.some(t=>!Array.isArray(backup.data[t]))))throw Error('Unsupported backup format.');
     // Atomically reserve a new file: restoration never overwrites a database.
     mkdirSync(dirname(destination),{recursive:true});
     closeSync(openSync(destination,'wx',0o600));
@@ -48,6 +49,7 @@ export function restoreData(source: string, destination: string) {
           UPDATE campaigns SET state='paused',reason='Restored backup: sending authorization cleared' WHERE state NOT IN ('completed','cancelled');
           UPDATE mail_actions SET state='draft' WHERE state='queued' AND attempts=0;
           UPDATE mail_actions SET state='uncertain',error='Restored attempted send: reconcile manually; never automatically resend' WHERE state IN ('sending','queued');
+          UPDATE whatsapp_previews SET state='uncertain',reason='Restored manual handoff: reconcile without resend' WHERE state='handed_off';
           DELETE FROM task_retry_holds;
           UPDATE chat_requests SET state='paused',reason='Restored backup; resume manually',retry_at=NULL WHERE state IN ('queued','running');
           UPDATE result_sets SET state='partial',reason='Restored backup; unfinished discovery paused' WHERE state='running';`);

@@ -1,3 +1,13 @@
+## WhatsApp preview milestone — October 12, 2026
+
+WhatsApp now supports one-recipient English AI previews from an existing lead or company result, explicit-country number format checks, durable preview progress and user-assisted handoff. Use WhatsApp preview on the selected row; review in Chat. The existing supervisor/model/free-tier consent gates remain. Only selected context goes to Gemini; no recipient phone/email or full database. Identical preparation/content is deduplicated. Demo is visibly labeled and cannot hand off.
+
+Prepared, manual handoff ready, user-reported Submitted, user-reported receipt Confirmed and Uncertain are distinct. Opening a wa.me link is not automatic sending; it shares the selected recipient/text with WhatsApp for manual review. Uncertain results cannot be handed off/resubmitted. Sender/account and actual delivery are not observable by this app. Gmail sending remains disabled.
+
+Optional official Meta free development test assets have a private configuration-bound read-only connection check. No test credentials exist here yet: Not configured/not connected. Production automated messaging and API test sending are not implemented/enabled; templates, opt-in, business onboarding and pricing are separate requirements. See [WHATSAPP_SETUP.md](WHATSAPP_SETUP.md) for Roman Urdu setup steps, current official sources/cost limitations and exact private setting names. No free unlimited promise, paid service, unofficial session library or browser download.
+
+Build and 60 tests passed. Actual installed-Chrome UI → API → existing live Gemini → saved preview → browser refresh passed on one isolated labeled sample (one HTTP 200 model request); no handoff/submission/send. Browser scopes and remaining native IME/physical keyboard limitations are in VERIFICATION.md. Existing personal data and 19 live email drafts are preserved. This section supersedes older statements that all WhatsApp functionality is pending; automatic messaging remains pending.
+
 ## Current interface — October 12, 2026
 
 Chat opens by default with compact desktop navigation, a mobile navigation drawer and an optional Details panel. The restrained neutral/teal interface keeps the composer in the workspace flow. Enter sends once; Shift+Enter adds a newline; composition guards remain. New updates follow the conversation only while you are near the bottom; otherwise use Jump to latest. Replies, task progress, results and snapshots still come from persisted backend state.

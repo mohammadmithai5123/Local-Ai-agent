@@ -1,3 +1,9 @@
+## WhatsApp milestone — October 12, 2026
+
+Implemented: selected-context English AI previews, explicit-country format validation, durable one-recipient state/deduplication, inline Chat review/quota controls, clearly labeled manual handoff and user-reported outcomes, optional private read-only Meta test-asset check, backup v3 compatibility. Build/60 tests pass. One real live preview saved/refreshed through actual installed-Chrome UI (one Gemini HTTP 200; no send). Existing UI/discovery/CSV/drafts/Gmail data preserved.
+
+Not connected: no private Meta test assets/token/attestations. Account login/asset consent and a real read-only asset check await user setup. Official sandbox is a free development option, not production permission. Production/API test sending, approved-template management, delivery webhooks and independently confirmed outcomes remain unimplemented/blocked; proactive production outreach cannot be promised at zero cost. WhatsApp now has preview/manual support, not an automatic messaging integration. LinkedIn, voice and mailbox filing remain pending; Gmail sending stays disabled.
+
 ## UI milestone — October 12, 2026
 
 Implemented and checked: calm chat-first shell, desktop sidebar/mobile drawer, optional details, readable conversation and bottom composer, scroll-aware updates, honest partial/quota cards, count-labeled immutable snapshots, searchable/filterable Leads with local visible-row export, compact Tasks, grouped Settings, simplified Connections and collapsed activity. Installed Chrome covered 375/768/1440 px without page overflow across all navigation screens; 36 UI checks and 50 tests passed. No providers, backend workflows or data were rebuilt.

@@ -33,6 +33,13 @@ export function openStore(path: string) {
       CREATE TABLE result_exports(id TEXT PRIMARY KEY,set_id TEXT NOT NULL REFERENCES result_sets(id),filename TEXT NOT NULL,created TEXT NOT NULL,content TEXT NOT NULL DEFAULT '');
       INSERT INTO result_exports SELECT * FROM result_exports_single;
       DROP TABLE result_exports_single; COMMIT;`);
+    db.exec(`CREATE TABLE IF NOT EXISTS whatsapp_previews(
+      id TEXT PRIMARY KEY,request_id TEXT UNIQUE NOT NULL,task_id TEXT UNIQUE NOT NULL REFERENCES tasks(id),
+      source_kind TEXT NOT NULL,source_id TEXT NOT NULL,source_position INTEGER,context TEXT NOT NULL,
+      country TEXT NOT NULL,recipient TEXT NOT NULL,instruction TEXT NOT NULL,mode TEXT NOT NULL,
+      body TEXT NOT NULL DEFAULT '',digest TEXT,creation_key TEXT UNIQUE NOT NULL,fingerprint TEXT UNIQUE,
+      state TEXT NOT NULL,reason TEXT,created TEXT NOT NULL,updated TEXT NOT NULL,manual_note TEXT,
+      confirmed_at TEXT,duplicate_of TEXT);`);
     return db;
 }
 export type Store = ReturnType<typeof openStore>;

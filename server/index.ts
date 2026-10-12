@@ -15,11 +15,13 @@ import { selectLeads } from './selection.js';
 import {ChatEngine} from './chat-engine.js';
 import {resultSnapshot,exportCsv,saveResultLeads} from './results.js';
 import {searchSummary} from './discovery.js';
+import {WhatsAppTestConnection} from './whatsapp-test.js';
 // Load local environment without printing values or exposing them to Vite.
 if (existsSync('.env'))
     process.loadEnvFile('.env');
 const db = openStore(process.env.DB_PATH || 'data/workbench.sqlite');
 const supervisor = new Supervisor(db);
+const whatsappTest=new WhatsAppTestConnection(db);
 const chatEngine=new ChatEngine(db);supervisor.tools=()=>chatEngine.tick();
 const gmail = new Gmail(new TokenVault(join(dirname(process.env.DB_PATH||'data/workbench.sqlite'),'credentials')));
 const campaigns = new Campaigns(db,gmail);
@@ -33,7 +35,7 @@ const uploads = new Map<string, {
 const timer = setInterval(() => {void supervisor.tick().catch(() => console.error('Supervisor database operation failed'));if(process.env.GMAIL_ENABLE_SENDING==='true')void campaigns.tick().catch(()=>console.error('Gmail ledger operation failed; inspect persisted outcomes'));}, 700);
 const production = process.argv.includes('--production');
 const vite = production ? null : await (await import('vite')).createServer({ server: { middlewareMode: true, host: '127.0.0.1',fs:{deny:['**/.env','**/.env.*','**/.git/**','**/*.{crt,pem}','**/data/**','**/backups/**','**/credentials/**','**/uploads/**','**/sessions/**','**/.npm-cache/**','**/*.sqlite*','**/client_secret*.json','**/*token*.json']} }, appType: 'spa' });
-function state() { return { chatRequests:db.prepare('SELECT * FROM chat_requests ORDER BY created DESC,rowid DESC').all(), resultSets:resultSnapshot(db),search:searchSummary(), leads: db.prepare('SELECT * FROM leads ORDER BY name').all(), chat: db.prepare('SELECT * FROM chat ORDER BY created,rowid').all(), tasks: db.prepare('SELECT t.*,(SELECT not_before FROM task_retry_holds h WHERE h.task_id=t.id) retry_not_before,EXISTS(SELECT 1 FROM tool_jobs j WHERE j.task_id=t.id) tool,EXISTS(SELECT 1 FROM task_plans p WHERE p.task_id=t.id) planning,(SELECT count(*) FROM steps WHERE task_id=t.id) total,(SELECT count(*) FROM steps WHERE task_id=t.id AND state=\'done\') done FROM tasks t ORDER BY created DESC').all(), steps: db.prepare('SELECT * FROM steps').all(), drafts: db.prepare('SELECT * FROM drafts ORDER BY created DESC').all(), events: db.prepare('SELECT * FROM events ORDER BY id DESC LIMIT 30').all(), connection: connectionState(), aiRequests:requestMetadata, integrations: { gmail: gmail.summary().status, whatsapp: 'Not implemented', linkedin: 'Not implemented' }, gmail:{...gmail.summary(),sendingEnabled:process.env.GMAIL_ENABLE_SENDING==='true'},...campaigns.snapshot() }; }
+function state() { return { chatRequests:db.prepare('SELECT * FROM chat_requests ORDER BY created DESC,rowid DESC').all(), resultSets:resultSnapshot(db),search:searchSummary(), leads: db.prepare('SELECT * FROM leads ORDER BY name').all(), chat: db.prepare('SELECT * FROM chat ORDER BY created,rowid').all(), tasks: db.prepare('SELECT t.*,(SELECT not_before FROM task_retry_holds h WHERE h.task_id=t.id) retry_not_before,EXISTS(SELECT 1 FROM tool_jobs j WHERE j.task_id=t.id) tool,EXISTS(SELECT 1 FROM task_plans p WHERE p.task_id=t.id) planning,(SELECT count(*) FROM steps WHERE task_id=t.id) total,(SELECT count(*) FROM steps WHERE task_id=t.id AND state=\'done\') done FROM tasks t ORDER BY created DESC').all(), steps: db.prepare('SELECT * FROM steps').all(), drafts: db.prepare('SELECT * FROM drafts ORDER BY created DESC').all(), events: db.prepare('SELECT * FROM events ORDER BY id DESC LIMIT 30').all(), connection: connectionState(), aiRequests:requestMetadata, integrations: { gmail: gmail.summary().status, whatsapp: 'Local previews and manual handoff only; automatic sending disabled', linkedin: 'Not implemented' }, whatsapp:{test:whatsappTest.summary(),previews:chatEngine.whatsapp.list(),sendingEnabled:false,automaticSendingImplemented:false}, gmail:{...gmail.summary(),sendingEnabled:process.env.GMAIL_ENABLE_SENDING==='true'},...campaigns.snapshot() }; }
 const server = createServer(async (req, res) => {
     res.setHeader('X-Frame-Options','DENY');
     const host = req.headers.host || '';
@@ -100,6 +102,12 @@ const server = createServer(async (req, res) => {
             chunks.push(chunk);
         }
         const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        if(url.pathname==='/api/whatsapp/test/check'){send(await whatsappTest.check());return;}
+        if(url.pathname==='/api/whatsapp/test/disconnect'){send(whatsappTest.disconnect());return;}
+        if(url.pathname==='/api/whatsapp/previews'){send(chatEngine.whatsapp.create(body));return;}
+        const whatsappAction=url.pathname.match(/^\/api\/whatsapp\/previews\/([\w-]+)\/(handoff|submitted|confirmed|uncertain|closed_not_sent)$/);
+        if(whatsappAction){send(chatEngine.whatsapp.action(whatsappAction[1],whatsappAction[2],body));return;}
+        if(url.pathname.startsWith('/api/whatsapp/'))throw Error('Automatic WhatsApp sending is disabled and not implemented. Use local previews; no message submitted.');
         if(url.pathname==='/api/setup/workflow'){const data=z.object({mode:z.enum(['demo','live']),requestId:z.string().uuid()}).parse(body);send(await setup.verifyWorkflow(data.mode,data.requestId));return;}
         if(url.pathname==='/api/setup/repository'){send(await setup.repositoryCheck());return;}
         if(url.pathname==='/api/gmail/connect'){if(!host.startsWith('localhost:'))throw Error('Open this app at http://localhost:'+String(process.env.PORT||3000)+' before connecting Gmail.');const auth=gmail.begin();res.setHeader('Set-Cookie',`gmail_oauth=${auth.state}; HttpOnly; SameSite=Lax; Path=/api/gmail/callback; Max-Age=600`);send({url:auth.url});return;}

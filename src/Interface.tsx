@@ -1,6 +1,6 @@
 import React,{useEffect,useRef} from 'react';
 
-function trapDialogTab(event:React.KeyboardEvent<HTMLDialogElement>) {
+export function trapDialogTab(event:React.KeyboardEvent<HTMLDialogElement>) {
     if(event.key!=='Tab')return;
     const controls=Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input:not(:disabled),textarea:not(:disabled),select:not(:disabled),summary,[tabindex="0"]')).filter(el=>el.getClientRects().length>0);
     const first=controls[0],last=controls.at(-1);if(!first)return;
@@ -17,6 +17,7 @@ export function Icon({name,size=20}:{name:string;size?:number}) {
         Settings:<><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></>,
         Gmail:<><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></>,
         Setup:<><path d="M8 3h8l5 6-9 12L3 9Z"/><path d="m8 11 3 3 5-6"/></>,
+        whatsapp:<><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-1 1v-8.5a8.5 8.5 0 0 1 18-1Z"/><path d="M8 7c-2 2 3 7 5 7l2-2-3-1-1 1-2-2 1-1Z"/></>,
         menu:<path d="M4 6h16M4 12h16M4 18h16"/>,close:<path d="m6 6 12 12M6 18 18 6"/>,
         arrow:<path d="M12 19V5m-6 6 6-6 6 6"/>,panel:<><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></>,
         download:<><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></>,
